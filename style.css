@@ -1,44 +1,281 @@
+/* ===== Рутокен Био — Светлый дизайн в стиле rutoken.ru ===== */
+
 :root {
-  --bg-dark: #0a0e1a;
-  --bg-card: #111827;
-  --accent: #00d4ff;
-  --accent-glow: rgba(0, 212, 255, 0.3);
-  --text: #e2e8f0;
-  --text-muted: #94a3b8;
-  --border: #1e293b;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --warning: #f59e0b;
+  --rt-red: #d23;
+  --rt-red-dark: #a51a26;
+  --rt-teal: #117788;
+  --rt-teal-light: rgba(17, 119, 136, 0.06);
+  --rt-bg: #ffffff;
+  --rt-bg-alt: #f8f9fa;
+  --rt-text: #1a1a1a;
+  --rt-text-muted: #666;
+  --rt-border: #e0e0e0;
+  --rt-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --rt-radius: 8px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: var(--bg-dark);
-  color: var(--text);
-  min-height: 100vh;
+  font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  background: var(--rt-bg);
+  color: var(--rt-text);
+  line-height: 1.6;
 }
 
-/* ===== TOP BAR ===== */
-.topbar {
+/* ===== ШАПКА ===== */
+.site-header {
+  background: var(--rt-bg);
+  border-bottom: 1px solid var(--rt-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--rt-shadow);
+}
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #0d1b2e 0%, #0a0e1a 100%);
-  border-bottom: 1px solid var(--border);
 }
-.topbar-brand { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-.topbar-status {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  padding: 4px 12px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-tagline {
+  color: var(--rt-red);
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
-/* ===== BIO BUTTONS (top-right corner) ===== */
+/* ===== СТАТУС ===== */
+.status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--rt-bg-alt);
+  color: var(--rt-text-muted);
+  border: 1px solid var(--rt-border);
+}
+.status-badge.connected {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-color: #a5d6a7;
+}
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8f0f5 100%);
+  padding: 60px 24px;
+}
+.hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: var(--rt-red);
+  color: #fff;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--rt-text);
+  margin-bottom: 16px;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--rt-text-muted);
+  margin-bottom: 32px;
+}
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+}
+.hero-visual {
+  display: flex;
+  justify-content: center;
+}
+.token-card {
+  background: var(--rt-red);
+  color: #fff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(221, 34, 51, 0.3);
+  max-width: 320px;
+}
+.token-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+/* ===== КНОПКИ ===== */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: var(--rt-radius);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--rt-border);
+  background: var(--rt-bg);
+  color: var(--rt-text);
+  transition: all 0.2s;
+}
+.btn:hover {
+  background: var(--rt-bg-alt);
+  border-color: var(--rt-teal);
+}
+.btn-primary {
+  background: var(--rt-red);
+  color: #fff;
+  border-color: var(--rt-red);
+}
+.btn-primary:hover {
+  background: var(--rt-red-dark);
+  border-color: var(--rt-red-dark);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--rt-red);
+  border-color: var(--rt-red);
+}
+.btn-outline:hover {
+  background: var(--rt-red);
+  color: #fff;
+}
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+/* ===== STEPS SECTION ===== */
+.steps-section {
+  padding: 60px 24px;
+  background: var(--rt-bg);
+}
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  color: var(--rt-text);
+}
+.section-subtitle {
+  text-align: center;
+  color: var(--rt-text-muted);
+  margin-bottom: 40px;
+}
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+.step-card {
+  background: var(--rt-bg);
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  padding: 24px;
+  box-shadow: var(--rt-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--rt-red);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+}
+.step-card h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.step-desc {
+  color: var(--rt-text-muted);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+.step-select,
+.step-input,
+.step-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  background: var(--rt-bg);
+}
+.step-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+.step-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== КЛЮЧЕВЫЕ ПАРЫ ===== */
+.keys-section {
+  padding: 40px 24px;
+  background: var(--rt-bg-alt);
+}
+.keys-panel {
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--rt-bg);
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  padding: 24px;
+  box-shadow: var(--rt-shadow);
+}
+.keys-panel select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  margin-bottom: 12px;
+}
+.keys-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== БИО-КНОПКИ (правый верхний угол) ===== */
 .bio-buttons-top-right {
   position: fixed;
   top: 16px;
@@ -46,165 +283,55 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 100;
+  z-index: 200;
 }
 .bio-btn {
   padding: 6px 14px;
   font-size: 0.8rem;
   font-weight: 600;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--rt-teal);
   border-radius: 4px;
   background: transparent;
-  color: var(--accent);
+  color: var(--rt-teal);
   cursor: pointer;
   transition: all 0.2s;
   text-align: center;
 }
 .bio-btn:hover {
-  background: var(--accent);
-  color: var(--bg-dark);
-  box-shadow: 0 0 12px var(--accent-glow);
-}
-.bio-btn.small { padding: 4px 10px; font-size: 0.75rem; }
-.bio-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ===== APP LAYOUT ===== */
-.app-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 20px;
-}
-
-.panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px;
-}
-.panel h2 {
-  font-size: 1.1rem;
-  margin-bottom: 12px;
-  color: var(--accent);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-.panel label {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-.panel select,
-.panel input[type="text"],
-.panel input[type="password"],
-.panel textarea {
-  width: 100%;
-  background: #0d1525;
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 4px;
-  padding: 8px;
-  font-size: 0.9rem;
-}
-.panel select:focus,
-.panel input:focus,
-.panel textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-/* ===== BUTTONS ===== */
-.action-btn {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--accent);
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-}
-.action-btn:hover {
-  background: var(--accent);
-  color: var(--bg-dark);
-}
-.action-btn.primary {
-  background: var(--accent);
-  color: var(--bg-dark);
-}
-.action-btn.danger {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.action-btn.danger:hover {
-  background: var(--danger);
+  background: var(--rt-teal);
   color: #fff;
 }
-
-/* ===== FORM ROWS ===== */
-.form-row {
-  margin-bottom: 12px;
+.bio-btn.small {
+  padding: 4px 10px;
+  font-size: 0.75rem;
 }
-.form-row label {
-  display: block;
-  margin-bottom: 4px;
-}
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-.checkbox-label input[type="checkbox"] {
-  width: auto;
+.bio-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-/* ===== CONSOLE ===== */
-.console-output {
-  background: #000;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 12px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.82rem;
-  max-height: 300px;
-  overflow-y: auto;
-  color: #00ff88;
-}
-.console-line {
-  margin-bottom: 4px;
-  word-break: break-word;
-}
-.console-line.error { color: var(--danger); }
-.console-line.success { color: var(--success); }
-.console-line.warning { color: var(--warning); }
-
-/* ===== BIO POPUP ===== */
+/* ===== БИО-ПОПАП ===== */
 .bio-popup {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 .bio-popup-content {
-  background: var(--bg-card);
-  border: 1px solid var(--accent);
-  border-radius: 12px;
+  background: var(--rt-bg);
+  border-radius: 16px;
   padding: 40px;
   text-align: center;
   max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 .bio-popup-content h2 {
-  color: var(--accent);
+  color: var(--rt-text);
   margin-bottom: 20px;
+  font-size: 1.3rem;
 }
 .bio-popup-scanner {
   margin: 20px auto;
@@ -212,26 +339,35 @@ body {
   height: 120px;
 }
 .bio-popup-hint {
-  color: var(--text-muted);
+  color: var(--rt-text-muted);
   margin-top: 16px;
 }
 
-/* ===== RESULT BOX ===== */
+/* ===== РЕЗУЛЬТАТ ===== */
 .result-box {
   margin-top: 12px;
 }
 .result-box textarea {
   width: 100%;
+  padding: 8px;
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  font-family: monospace;
+  font-size: 0.85rem;
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
-  .app-container {
+  .hero-inner {
     grid-template-columns: 1fr;
+  }
+  .hero h1 {
+    font-size: 2rem;
   }
   .bio-buttons-top-right {
     position: static;
     flex-direction: row;
     flex-wrap: wrap;
+    padding: 12px;
   }
 }

@@ -1,16 +1,15 @@
 // ===== Рутокен Био — Демо =====
-// Логика работы с Рутокен плагином: вход по PIN, создание ключей,
-// подпись данных, биометрическая аутентификация
+// Светлый дизайн в стиле rutoken.ru
 
 (function() {
   'use strict';
 
   // ===== СОСТОЯНИЕ =====
-  let plugin = null;        // загруженный плагин
-  let currentDevice = null; // ID выбранного устройства
-  let isLoggedIn = false;   // выполнен ли вход по PIN
+  let plugin = null;
+  let currentDevice = null;
+  let isLoggedIn = false;
 
-  // ===== DOM ЭЛЕМЕНТЫ =====
+  // ===== DOM =====
   const deviceList = document.getElementById('deviceList');
   const keyList = document.getElementById('keyList');
   const pinInput = document.getElementById('pinInput');
@@ -19,12 +18,12 @@
   const bioPopup = document.getElementById('bioPopup');
 
   // ===== УТИЛИТЫ =====
-
-  function log(msg, type = 'info') {
+  function log(msg, type) {
+    type = type || 'info';
     const line = document.createElement('div');
     line.className = 'console-line ' + type;
     const ts = new Date().toLocaleTimeString('ru-RU');
-    line.textContent = `[${ts}] ${msg}`;
+    line.textContent = '[' + ts + '] ' + msg;
     consoleEl.appendChild(line);
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
@@ -47,7 +46,6 @@
   }
 
   // ===== ЗАГРУЗКА ПЛАГИНА =====
-
   function loadPlugin() {
     if (typeof window.rutoken !== 'undefined') {
       window.rutoken.ready.then(function() {
@@ -63,21 +61,20 @@
         if (!loadedPlugin) return;
         plugin = loadedPlugin;
         connectionStatus.textContent = 'Плагин загружен ✓';
-        connectionStatus.style.color = 'var(--success)';
+        connectionStatus.classList.add('connected');
         log('Плагин Рутокен загружен', 'success');
         refreshDevices();
       }).catch(function(err) {
         log('Ошибка загрузки плагина: ' + (err.message || err), 'error');
-        connectionStatus.textContent = 'Ошибка загрузки плагина';
+        connectionStatus.textContent = 'Ошибка загрузки';
       });
     } else {
-      log('Плагин Рутокен не обнаружен. Установите расширение.', 'warning');
+      log('Плагин Рутокен не обнаружен', 'warning');
       connectionStatus.textContent = 'Плагин не найден';
     }
   }
 
   // ===== УСТРОЙСТВА =====
-
   function refreshDevices() {
     if (!plugin) {
       log('Плагин не загружен', 'error');
@@ -117,7 +114,6 @@
   }
 
   // ===== ВХОД / ВЫХОД ПО PIN =====
-
   function login() {
     if (!plugin || currentDevice === null) {
       log('Устройство не выбрано или плагин не загружен', 'error');
@@ -145,7 +141,6 @@
   }
 
   // ===== КЛЮЧЕВЫЕ ПАРЫ =====
-
   function refreshKeys() {
     if (!plugin || currentDevice === null) return;
 
@@ -179,7 +174,6 @@
   }
 
   // ===== СОЗДАНИЕ КЛЮЧЕВОЙ ПАРЫ =====
-
   function createKeyPair() {
     if (!plugin || currentDevice === null) {
       log('Устройство не выбрано', 'error');
@@ -210,7 +204,6 @@
   }
 
   // ===== УДАЛЕНИЕ КЛЮЧА =====
-
   function deleteKey() {
     if (!plugin || currentDevice === null) return;
     const keyId = getSelectedKey();
@@ -226,7 +219,6 @@
   }
 
   // ===== ПОДПИСЬ ДАННЫХ =====
-
   function signData() {
     if (!plugin || currentDevice === null) {
       log('Устройство не выбрано', 'error');
@@ -283,7 +275,6 @@
   }
 
   // ===== БИОМЕТРИЧЕСКИЕ КНОПКИ =====
-
   function loginBio() {
     if (!plugin || currentDevice === null) {
       log('Устройство не выбрано', 'error');
@@ -324,7 +315,6 @@
   }
 
   // ===== ВСПОМОГАТЕЛЬНЫЕ =====
-
   function showBioPopup() {
     bioPopup.style.display = 'flex';
   }
@@ -334,7 +324,6 @@
   }
 
   // ===== ИНИЦИАЛИЗАЦИЯ =====
-
   function init() {
     // Привязка обработчиков
     document.getElementById('btnRefreshDevices').addEventListener('click', refreshDevices);
@@ -347,7 +336,6 @@
     document.getElementById('btnLoginBio').addEventListener('click', loginBio);
     document.getElementById('btnLogoutBio').addEventListener('click', logoutBio);
     document.getElementById('btnStopLoginBio').addEventListener('click', stopLoginBio);
-    document.getElementById('btnClearConsole').addEventListener('click', clearConsole);
 
     deviceList.addEventListener('change', onDeviceChange);
     keyList.addEventListener('change', function() {
