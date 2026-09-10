@@ -371,3 +371,39 @@ body {
     padding: 12px;
   }
 }
+
+/* ===== КОНСОЛЬ ЛОГОВ ===== */
+.console-section {
+  padding: 40px 24px;
+  background: var(--rt-bg-alt);
+}
+.console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.console-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--rt-text);
+}
+.console-output {
+  background: #1a1a1a;
+  color: #00ff88;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  padding: 16px;
+  border-radius: var(--rt-radius);
+  max-height: 300px;
+  overflow-y: auto;
+  line-height: 1.4;
+}
+.console-line {
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.console-line.info { color: #00d4ff; }
+.console-line.success { color: #00ff88; }
+.console-line.error { color: #ff4444; }
+.console-line.warning { color: #ffaa00; }

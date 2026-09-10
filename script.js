@@ -337,7 +337,8 @@
     document.getElementById('btnLogoutBio').addEventListener('click', logoutBio);
     document.getElementById('btnStopLoginBio').addEventListener('click', stopLoginBio);
 
-    deviceList.addEventListener('change', onDeviceChange);
+    // Очистка консоли
+    document.getElementById('btnClearConsole').addEventListener('click', clearConsole);
     keyList.addEventListener('change', function() {
       if (keyList.value) {
         log('Выбран ключ: ' + keyList.value, 'info');
