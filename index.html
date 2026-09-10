@@ -3,150 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Рутокен Био — Биометрическая аутентификация</title>
+  <title>Рутокен Био — Демонстрация биометрической аутентификации</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <header class="hero">
-    <div class="hero-content">
-      <div class="hero-badge">🔬 Биометрия + PKI</div>
-      <h1>Рутокен Био</h1>
-      <p class="subtitle">
-        Биометрический USB-токен для надёжной<br />
-        двухфакторной аутентификации
-      </p>
-      <div class="hero-buttons">
-        <a href="#features" class="btn btn-primary">Узнать больше</a>
-        <a href="#demo" class="btn btn-secondary">Демо</a>
-      </div>
-    </div>
-    <div class="hero-visual">
-      <div class="token-illustration">
-        <div class="token-body">
-          <div class="token-fingerprint">
-            <svg viewBox="0 0 64 64" width="64" height="64">
-              <path d="M32 8c-8 0-14 6-14 14 0 2 1 4 1 6 0 6-2 10-2 16 0 2 1 4 2 6" 
-                    stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M32 8c8 0 14 6 14 14 0 2-1 4-1 6 0 6 2 10 2 16" 
-                    stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M32 16c-4 0-8 4-8 8 0 4 1 6 1 10 0 4-1 6-1 8" 
-                    stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M32 16c4 0 8 4 8 8 0 4-1 6-1 10 0 4 1 6 1 8" 
-                    stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M32 24v16" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M28 30c0 4 1 6 4 6s4-2 4-6" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-        </div>
-        <div class="token-label">USB-Token</div>
-      </div>
-    </div>
+  <!-- ===== TOP BAR ===== -->
+  <header class="topbar">
+    <div class="topbar-brand">🔐 Рутокен Био — Демо</div>
+    <div class="topbar-status" id="connectionStatus">Плагин не загружен</div>
   </header>
 
-  <section id="features" class="features">
-    <h2>Возможности</h2>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <h3>Двухфакторная аутентификация</h3>
-        <p>Подтверждение личности по отпечатку пальца + PIN-код.</p>
+  <!-- ===== БИО КНОПКИ (правый верхний угол) ===== -->
+  <div class="bio-buttons-top-right">
+    <button id="btnLoginBio" class="bio-btn small">Войти по биометрии</button>
+    <button id="btnLogoutBio" class="bio-btn small">Выйти по биометрии</button>
+    <button id="btnStopLoginBio" class="bio-btn small">Остановить проверку био</button>
+  </div>
+
+  <!-- ===== ОСНОВНОЙ ИНТЕРФЕЙС ===== -->
+  <div class="app-container">
+
+    <!-- ===== ПАНЕЛЬ УСТРОЙСТВ ===== -->
+    <section class="panel devices-panel">
+      <h2>📱 Устройства</h2>
+      <label for="deviceList">Подключённые токены:</label>
+      <select id="deviceList" size="5"></select>
+      <button id="btnRefreshDevices" class="action-btn">↻ Обновить</button>
+    </section>
+
+    <!-- ===== ПАНЕЛЬ PIN ===== -->
+    <section class="panel pin-panel">
+      <h2>🔑 Вход на токен</h2>
+      <label for="pinInput">PIN-код:</label>
+      <input type="password" id="pinInput" value="12345678" />
+      <button id="btnLogin" class="action-btn">Войти</button>
+      <button id="btnLogout" class="action-btn">Выйти</button>
+    </section>
+
+    <!-- ===== ПАНЕЛЬ КЛЮЧЕЙ ===== -->
+    <section class="panel keys-panel">
+      <h2>🗝️ Ключевые пары</h2>
+      <label for="keyList">Ключи на устройстве:</label>
+      <select id="keyList" size="8"></select>
+      <button id="btnRefreshKeys" class="action-btn">↻ Обновить</button>
+      <button id="btnDeleteKey" class="action-btn danger">Удалить</button>
+    </section>
+
+    <!-- ===== ПАНЕЛЬ СОЗДАНИЯ КЛЮЧА ===== -->
+    <section class="panel create-key-panel">
+      <h2>➕ Создать ключевую пару</h2>
+      <div class="form-row">
+        <label>Алгоритм:</label>
+        <select id="keyAlgorithm">
+          <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2001">ГОСТ Р 34.10-2001</option>
+          <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_256" selected>ГОСТ Р 34.10-2012 256</option>
+          <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_512">ГОСТ Р 34.10-2012 512</option>
+        </select>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🛡️</div>
-        <h3>Защита приватных ключей</h3>
-        <p>Ключи никогда не покидают устройство. Экспорт невозможен.</p>
+      <div class="form-row">
+        <label>Маркер:</label>
+        <input type="text" id="keyMarker" placeholder="например TestKey" />
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>Быстрый доступ</h3>
-        <p>Приложите палец — и система подтвердит доступ.</p>
+      <div class="form-row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="useBio" />
+          🔬 С биометрией (защита отпечатком)
+        </label>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">📜</div>
-        <h3>Сертифицировано ФСТЭК</h3>
-        <p>Соответствует требованиям к средствам криптографической защиты.</p>
+      <button id="btnCreateKey" class="action-btn primary">Создать пару</button>
+    </section>
+
+    <!-- ===== ПАНЕЛЬ ПОДПИСИ ===== -->
+    <section class="panel sign-panel">
+      <h2>✍️ Подпись данных</h2>
+      <label for="signData">Данные для подписи (base64):</label>
+      <textarea id="signData" rows="3" placeholder="Введите данные..."></textarea>
+      <button id="btnSign" class="action-btn primary">Подписать</button>
+      <div id="signResult" class="result-box" style="display:none;">
+        <label>Результат подписи:</label>
+        <textarea id="signResultText" rows="4" readonly></textarea>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>Кросс-платформенность</h3>
-        <p>Windows, Linux, macOS. Поддержка PKCS#11.</p>
+    </section>
+
+    <!-- ===== КОНСОЛЬ ===== -->
+    <section class="panel console-panel">
+      <h2>📋 Лог операций</h2>
+      <div id="console" class="console-output"></div>
+      <button id="btnClearConsole" class="action-btn">Очистить</button>
+    </section>
+
+  </div>
+
+  <!-- ===== БИОМЕТРИЧЕСКИЙ ПОПАП ===== -->
+  <div id="bioPopup" class="bio-popup" style="display:none;">
+    <div class="bio-popup-content">
+      <h2>🔬 Коснитесь биометрического датчика</h2>
+      <div class="bio-popup-scanner">
+        <svg viewBox="0 0 100 100" width="120" height="120">
+          <path d="M50 20c-12 0-20 8-20 20 0 3 1 5 1 7 0 8-3 14-3 22 0 2 1 4 2 6" 
+                stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 20c12 0 20 8 20 20 0 3-1 5-1 7 0 8 3 14 3 22" 
+                stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 30c-6 0-10 4-10 10 0 5 1 8 1 14 0 5-1 8-1 12" 
+                stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 30c6 0 10 4 10 10 0 5-1 8-1 14 0 3 1 5 1 10" 
+                stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 40v20" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M44 48c0 5 1 8 6 8s6-3 6-8" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M40 56c0 8 4 14 10 14s10-6 10-14" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🧩</div>
-        <h3>Интеграция</h3>
-        <p>Active Directory, VPN, RDP, веб-сервисы и браузеры.</p>
-      </div>
+      <p class="bio-popup-hint">Приложите палец к сканеру...</p>
     </div>
-  </section>
-
-  <section id="demo" class="demo-section">
-    <h2>Демонстрация работы</h2>
-    <p class="demo-description">
-      Интерактивная симуляция процесса биометрической аутентификации.
-      Нажмите на сенсор токена, чтобы «прочитать» отпечаток пальца.
-    </p>
-
-    <div class="demo-container">
-      <div class="token-demo">
-        <div class="fingerprint-scanner" id="scanner" onclick="scanFingerprint()">
-          <div class="scanner-ring" id="scannerRing"></div>
-          <svg class="fingerprint-icon" id="fpIcon" viewBox="0 0 100 100" width="120" height="120">
-            <path d="M50 20c-12 0-20 8-20 20 0 3 1 5 1 7 0 8-3 14-3 22 0 3 1 5 2 7" 
-                  stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M50 20c12 0 20 8 20 20 0 3-1 5-1 7 0 8 3 14 3 22" 
-                  stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M50 30c-6 0-10 4-10 10 0 5 1 8 1 14 0 5-1 8-1 12" 
-                  stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M50 30c6 0 10 4 10 10 0 5-1 8-1 14 0 5 1 8 1 12" 
-                  stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M50 40v20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M44 48c0 5 1 8 6 8s6-3 6-8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M40 56c0 8 4 14 10 14s10-6 10-14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <p class="scanner-hint" id="scannerHint">Нажмите на сенсор</p>
-      </div>
-
-      <div class="status-panel">
-        <div class="status-step" id="step1">
-          <span class="step-icon">①</span>
-          <span class="step-text">Ожидание отпечатка пальца</span>
-        </div>
-        <div class="status-step" id="step2">
-          <span class="step-icon">②</span>
-          <span class="step-text">Проверка биометрических данных</span>
-        </div>
-        <div class="status-step" id="step3">
-          <span class="step-icon">③</span>
-          <span class="step-text">Разблокировка приватного ключа</span>
-        </div>
-        <div class="status-step" id="step4">
-          <span class="step-icon">④</span>
-          <span class="step-text">Аутентификация выполнена</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="specs">
-    <h2>Технические характеристики</h2>
-    <table class="specs-table">
-      <tr><td>Интерфейс</td><td>USB 2.0 (Type-A)</td></tr>
-      <tr><td>Биометрический сенсор</td><td>Емкостной, 508 dpi</td></tr>
-      <tr><td>Криптопроцессор</td><td>Сертифицированный, 2048-bit RSA / 256-bit GOST</td></tr>
-      <tr><td>Память</td><td>До 64 КБ для пользовательских данных</td></tr>
-      <tr><td>ОС</td><td>Windows 7+, Linux (kernel 3.x+), macOS 10.12+</td></tr>
-      <tr><td>Стандарты</td><td>PKCS#11, PC/SC, MiniDriver</td></tr>
-      <tr><td>Размеры</td><td>72 × 21 × 7 мм</td></tr>
-      <tr><td>Вес</td><td>6 г</td></tr>
-    </table>
-  </section>
-
-  <footer class="footer">
-    <p>© 2025 Рутокен Био — Демонстрационная страница</p>
-    <p class="footer-note">Эта страница создана для демонстрационных целей</p>
-  </footer>
+  </div>
 
   <script src="script.js"></script>
 </body>
