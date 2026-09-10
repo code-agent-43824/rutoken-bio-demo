@@ -190,6 +190,7 @@ python3 -m http.server 8000
 | `319cbfc` | Добавлена интеграция с Рутокен плагином: вход по PIN, создание ключей, подпись, биометрия |
 | `b671bfd` | Подробный AGENTS.md для преемников + обновлённый README.md |
 | `c8a9d2f` | Светлый дизайн в стиле rutoken.ru: шапка, hero, 4 шага customer journey, био-попап |
+| `bef7c03` | Fix: add console section to HTML, bind btnClearConsole |
 
 ## 🔗 Ссылки
 
