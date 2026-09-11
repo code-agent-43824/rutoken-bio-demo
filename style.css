@@ -123,6 +123,22 @@ body {
   justify-content: center;
   margin-bottom: 24px;
 }
+.token-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.token-row:last-child {
+  border-bottom: 0;
+}
+.token-row span {
+  opacity: 0.8;
+}
+.token-row strong {
+  text-align: right;
+}
 
 /* ===== КНОПКИ ===== */
 .btn {
@@ -278,7 +294,7 @@ body {
 /* ===== БИО-КНОПКИ (правый верхний угол) ===== */
 .bio-buttons-top-right {
   position: fixed;
-  top: 16px;
+  top: 88px;
   right: 24px;
   display: flex;
   flex-direction: column;
