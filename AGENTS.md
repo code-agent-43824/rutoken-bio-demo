@@ -30,17 +30,17 @@
 - Проверка необходимости биометрии: `plugin.isLoginBioRequired(deviceId, keyId)`
 - Выход по биометрии: `plugin.logoutBio(deviceId)`
 - Остановка проверки: `plugin.stopLoginBio()`
-- Подпись: `plugin.sign(deviceId, keyId, data, dataFormat, options)`
+- Подпись непосредственно на ключе: `plugin.rawSign(deviceId, keyId, data, {computeHash: true})`
 
 **Паттерн подписи с биометрией** (из референса):
 ```
 isLoginBioRequired(deviceId, keyId) → если true:
   loginBio(deviceId, {objectId: keyId, timeout}) → callback(isLoginBioSuccessful):
-    если успех → выполняем sign()
+    если успех → выполняем rawSign()
     если неуспех → отмена
   после sign → logoutBio()
 иначе:
-  сразу sign()
+  сразу rawSign()
 ```
 
 ### Этап 3: Светлый дизайн в стиле rutoken.ru
@@ -128,7 +128,7 @@ signData():
      - doSign() напрямую
 
 doSign(deviceId, keyId, data):
-  plugin.sign(deviceId, keyId, data, false, {addUserCertificate: true})
+  plugin.rawSign(deviceId, keyId, data, {computeHash: true})
   → показать результат в textarea
 
 // Биометрические кнопки
@@ -139,7 +139,7 @@ stopLoginBio() → plugin.stopLoginBio()
 
 ## ⚠️ Что НЕ сделано (для следующих агентов)
 
-1. **Деплой не выполнен** — страница не размещена на веб-сервере
+1. **GitHub Pages настроен** — публикация выполняется из `main` и корня репозитория
 2. **Не тестировалось с реальным токеном** — код написан по аналогии с референсом, но не проверен на реальном устройстве
 3. **Обработка ошибок** — базовая, может потребовать улучшения
 4. **Валидация ввода** — минимальная
@@ -191,6 +191,8 @@ python3 -m http.server 8000
 | `b671bfd` | Подробный AGENTS.md для преемников + обновлённый README.md |
 | `c8a9d2f` | Светлый дизайн в стиле rutoken.ru: шапка, hero, 4 шага customer journey, био-попап |
 | `bef7c03` | Fix: add console section to HTML, bind btnClearConsole |
+
+Текущая минимальная проверка без устройства: `node test.js`.
 
 ## 🔗 Ссылки
 

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Рутокен Био — Демонстрация биометрической аутентификации</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
         </p>
         <div class="hero-buttons">
           <a href="#steps" class="btn btn-primary">Начать работу</a>
-          <a href="#how-it-works" class="btn btn-outline">Как это работает</a>
+          <a href="#steps" class="btn btn-outline">Как это работает</a>
         </div>
       </div>
       <div class="hero-visual">
@@ -77,8 +77,8 @@
           <div class="step-number">1</div>
           <h3>Выберите устройство</h3>
           <p class="step-desc">Подключите токен и выберите его в списке</p>
-          <select id="deviceList" size="4" class="step-select"></select>
-          <button id="btnRefreshDevices" class="btn btn-sm">Обновить</button>
+          <select id="deviceList" size="4" class="step-select" aria-label="Подключённые устройства"></select>
+          <button type="button" id="btnRefreshDevices" class="btn btn-sm">Обновить</button>
         </div>
 
         <!-- Шаг 2 — Вход по PIN -->
@@ -86,10 +86,10 @@
           <div class="step-number">2</div>
           <h3>Войдите по PIN-коду</h3>
           <p class="step-desc">Введите PIN пользователя токена</p>
-          <input type="password" id="pinInput" value="12345678" class="step-input" />
+          <input type="password" id="pinInput" placeholder="PIN-код" autocomplete="current-password" class="step-input" aria-label="PIN-код пользователя">
           <div class="step-buttons">
-            <button id="btnLogin" class="btn btn-primary btn-sm">Войти</button>
-            <button id="btnLogout" class="btn btn-sm">Выйти</button>
+            <button type="button" id="btnLogin" class="btn btn-primary btn-sm">Войти</button>
+            <button type="button" id="btnLogout" class="btn btn-sm">Выйти</button>
           </div>
         </div>
 
@@ -103,11 +103,11 @@
             <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_256" selected>ГОСТ Р 34.10-2012 256</option>
             <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_512">ГОСТ Р 34.10-2012 512</option>
           </select>
-          <input type="text" id="keyMarker" placeholder="Маркер (напр. TestKey)" class="step-input" />
+          <input type="text" id="keyMarker" placeholder="Маркер (напр. TestKey)" class="step-input">
           <label class="step-checkbox">
-            <input type="checkbox" id="useBio" /> 🔬 С биометрией
+            <input type="checkbox" id="useBio"> 🔬 С биометрией
           </label>
-          <button id="btnCreateKey" class="btn btn-primary btn-sm">Создать пару</button>
+          <button type="button" id="btnCreateKey" class="btn btn-primary btn-sm">Создать пару</button>
         </div>
 
         <!-- Шаг 4 — Подпись -->
@@ -116,7 +116,7 @@
           <h3>Подпишите данные</h3>
           <p class="step-desc">При подписи на био-ключе появится попап</p>
           <textarea id="signData" rows="2" placeholder="Данные для подписи" class="step-textarea"></textarea>
-          <button id="btnSign" class="btn btn-primary btn-sm">Подписать</button>
+          <button type="button" id="btnSign" class="btn btn-primary btn-sm">Подписать</button>
           <div id="signResult" class="result-box" style="display:none;">
             <label>Результат:</label>
             <textarea id="signResultText" rows="3" readonly></textarea>
@@ -134,10 +134,10 @@
       <p class="section-subtitle">Управление созданными ключами на токене</p>
 
       <div class="keys-panel">
-        <select id="keyList" size="6" class="step-select"></select>
+        <select id="keyList" size="6" class="step-select" aria-label="Ключевые пары"></select>
         <div class="keys-buttons">
-          <button id="btnRefreshKeys" class="btn btn-sm">Обновить</button>
-          <button id="btnDeleteKey" class="btn btn-sm">Удалить</button>
+          <button type="button" id="btnRefreshKeys" class="btn btn-sm">Обновить</button>
+          <button type="button" id="btnDeleteKey" class="btn btn-sm">Удалить</button>
         </div>
       </div>
     </div>
@@ -148,7 +148,7 @@
     <div class="section-inner">
       <div class="console-header">
         <h2>Журнал операций</h2>
-        <button id="btnClearConsole" class="btn btn-sm">Очистить</button>
+        <button type="button" id="btnClearConsole" class="btn btn-sm">Очистить</button>
       </div>
       <div id="console" class="console-output"></div>
     </div>
@@ -156,13 +156,13 @@
 
   <!-- ===== БИО-КНОПКИ (правый верхний угол) ===== -->
   <div class="bio-buttons-top-right">
-    <button id="btnLoginBio" class="bio-btn small">Войти по биометрии</button>
-    <button id="btnLogoutBio" class="bio-btn small">Выйти по биометрии</button>
-    <button id="btnStopLoginBio" class="bio-btn small">Остановить проверку био</button>
+    <button type="button" id="btnLoginBio" class="bio-btn small">Войти по биометрии</button>
+    <button type="button" id="btnLogoutBio" class="bio-btn small">Выйти по биометрии</button>
+    <button type="button" id="btnStopLoginBio" class="bio-btn small">Остановить проверку био</button>
   </div>
 
   <!-- ===== БИО-ПОПАП ===== -->
-  <div id="bioPopup" class="bio-popup" style="display:none;">
+  <div id="bioPopup" class="bio-popup" role="status" aria-live="assertive" style="display:none;">
     <div class="bio-popup-content">
       <h2>🔬 Коснитесь биометрического датчика</h2>
       <div class="bio-popup-scanner">
@@ -180,6 +180,7 @@
     </div>
   </div>
 
+  <script src="https://aktivco.github.io/rutoken-plugin-demo/rutoken-plugin.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

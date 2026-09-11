@@ -14,7 +14,7 @@
 - 🔐 **Вход по PIN** — `plugin.login(deviceId, pin)`
 - 🗝️ **Создание ключа** — `plugin.generateKeyPair(deviceId, undefined, marker, options)` с опцией `linkToBiometrics`
 - 🗝️ **Список ключей** — `plugin.enumerateKeys(deviceId, '')` + `plugin.getKeyLabel()`
-- ✍️ **Подпись данных** — `plugin.sign(deviceId, keyId, data, false, {addUserCertificate: true})`
+- ✍️ **Подпись данных на ключе** — `plugin.rawSign(deviceId, keyId, data, {computeHash: true})`
 - 🔬 **Биометрия** — `plugin.loginBio()`, `plugin.logoutBio()`, `plugin.stopLoginBio()`
 
 ## 📁 Структура
@@ -36,13 +36,19 @@ python3 -m http.server 8000
 # → http://localhost:8000
 ```
 
+## ✅ Проверка
+
+```bash
+node test.js
+```
+
 ## 🌐 GitHub Pages
 
 Страница доступна по адресу: **https://code-agent-43824.github.io/rutoken-bio-demo/**
 
 ## 📝 Технические детали
 
-- **Без внешних зависимостей** — чистые HTML/CSS/JS
+- **Без сборки** — чистые HTML/CSS/JS и официальный загрузчик `rutoken-plugin.js` с демо-портала Рутокен
 - **Светлая тема** — цветовая схема на CSS Custom Properties
 - **Адаптивность** — grid-layout с медиа-запросами
 - **IIFE-модуль** — весь JS обёрнут в IIFE для изоляции scope

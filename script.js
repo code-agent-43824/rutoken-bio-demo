@@ -7,7 +7,6 @@
   // ===== СОСТОЯНИЕ =====
   let plugin = null;
   let currentDevice = null;
-  let isLoggedIn = false;
 
   // ===== DOM =====
   const deviceList = document.getElementById('deviceList');
@@ -32,16 +31,12 @@
     consoleEl.innerHTML = '';
   }
 
-  function getSelectedDevice() {
-    if (currentDevice === null) {
-      throw new Error('Устройство не выбрано');
-    }
-    return currentDevice;
-  }
-
   function getSelectedKey() {
     const val = keyList.value;
-    if (!val) throw new Error('Ключ не выбран');
+    if (!val) {
+      log('Ключ не выбран', 'error');
+      return null;
+    }
     return val;
   }
 
@@ -82,6 +77,8 @@
     }
 
     deviceList.innerHTML = '';
+    keyList.innerHTML = '';
+    currentDevice = null;
     plugin.enumerateDevices().then(function(devices) {
       if (!devices || devices.length === 0) {
         log('Нет подключённых устройств', 'warning');
@@ -123,7 +120,6 @@
     const pin = pinInput.value;
     plugin.login(currentDevice, pin).then(function() {
       log('Вход выполнен успешно', 'success');
-      isLoggedIn = true;
       refreshKeys();
     }).catch(function(err) {
       log('Ошибка входа: ' + (err.message || err), 'error');
@@ -134,7 +130,6 @@
     if (!plugin || currentDevice === null) return;
     plugin.logout(currentDevice).then(function() {
       log('Выход выполнен', 'success');
-      isLoggedIn = false;
     }).catch(function(err) {
       log('Ошибка выхода: ' + err, 'error');
     });
@@ -180,20 +175,26 @@
       return;
     }
 
-    const algorithm = document.getElementById('keyAlgorithm').value;
+    const algorithmName = document.getElementById('keyAlgorithm').value;
+    const algorithm = plugin[algorithmName];
     const marker = document.getElementById('keyMarker').value || 'TestKey';
     const useBio = document.getElementById('useBio').checked;
 
+    if (typeof algorithm === 'undefined') {
+      log('Алгоритм не поддерживается установленной версией плагина', 'error');
+      return;
+    }
+
     const options = {
       publicKeyAlgorithm: algorithm,
-      keySpec: plugin.KEY_SPEC_SIGN_AND_EXCHANGE
+      keySpec: plugin.KEY_SPEC_SIGN
     };
 
     if (useBio) {
       options.linkToBiometrics = true;
     }
 
-    log('Создание ключевой пары (алгоритм: ' + algorithm + ', био: ' + useBio + ')...');
+    log('Создание ключевой пары (алгоритм: ' + algorithmName + ', био: ' + useBio + ')...');
 
     plugin.generateKeyPair(currentDevice, undefined, marker, options).then(function() {
       log('Ключевая пара создана', 'success');
@@ -207,6 +208,7 @@
   function deleteKey() {
     if (!plugin || currentDevice === null) return;
     const keyId = getSelectedKey();
+    if (!keyId) return;
 
     if (!confirm('Удалить ключевую пару?')) return;
 
@@ -232,15 +234,17 @@
     }
 
     const keyId = getSelectedKey();
+    if (!keyId) return;
+    const deviceId = currentDevice;
     log('Подпись данных на ключе ' + keyId + '...');
 
     // Проверяем нужна ли биометрия для этого ключа
-    plugin.isLoginBioRequired(currentDevice, keyId).then(function(bioRequired) {
+    plugin.isLoginBioRequired(deviceId, keyId).then(function(bioRequired) {
       if (bioRequired) {
         // Показываем попап
         showBioPopup();
 
-        plugin.loginBio(currentDevice, { objectId: keyId, timeout: 30000 },
+        plugin.loginBio(deviceId, { objectId: keyId, timeout: 30000 },
           function(isLoginBioSuccessful) {
             if (!isLoginBioSuccessful) {
               hideBioPopup();
@@ -249,7 +253,13 @@
             }
             hideBioPopup();
             log('Биометрическая аутентификация успешна', 'success');
-            doSign(currentDevice, keyId, data);
+            doSign(deviceId, keyId, data).catch(function(err) {
+              log('Ошибка подписи: ' + err, 'error');
+            }).then(function() {
+              return plugin.logoutBio(deviceId);
+            }).catch(function(err) {
+              log('Ошибка выхода по биометрии: ' + err, 'error');
+            });
           }
         ).catch(function(err) {
           hideBioPopup();
@@ -257,7 +267,9 @@
         });
       } else {
         // Без биометрии
-        doSign(currentDevice, keyId, data);
+        doSign(deviceId, keyId, data).catch(function(err) {
+          log('Ошибка подписи: ' + err, 'error');
+        });
       }
     }).catch(function(err) {
       log('Ошибка проверки биометрии: ' + err, 'error');
@@ -265,12 +277,10 @@
   }
 
   function doSign(deviceId, keyId, data) {
-    plugin.sign(deviceId, keyId, data, false, { addUserCertificate: true }).then(function(result) {
+    return plugin.rawSign(deviceId, keyId, data, { computeHash: true }).then(function(result) {
       log('Подпись выполнена успешно', 'success');
       document.getElementById('signResult').style.display = 'block';
       document.getElementById('signResultText').value = result;
-    }).catch(function(err) {
-      log('Ошибка подписи: ' + err, 'error');
     });
   }
 
@@ -308,8 +318,10 @@
   function stopLoginBio() {
     if (!plugin) return;
     plugin.stopLoginBio().then(function() {
+      hideBioPopup();
       log('Проверка биометрии остановлена', 'warning');
     }).catch(function(err) {
+      hideBioPopup();
       log('Ошибка остановки: ' + err, 'error');
     });
   }
@@ -327,6 +339,7 @@
   function init() {
     // Привязка обработчиков
     document.getElementById('btnRefreshDevices').addEventListener('click', refreshDevices);
+    deviceList.addEventListener('change', onDeviceChange);
     document.getElementById('btnLogin').addEventListener('click', login);
     document.getElementById('btnLogout').addEventListener('click', logout);
     document.getElementById('btnCreateKey').addEventListener('click', createKeyPair);
