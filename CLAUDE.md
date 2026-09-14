@@ -51,7 +51,10 @@ implements:
 - `innerHTML` may only be assigned `''`; `FakeElement` asserts on any other value;
 - timers and the clipboard go through `window.setTimeout` / `window.clearTimeout` /
   `window.navigator.clipboard`, never the bare globals;
-- one handler per element per event type — the fake `addEventListener` overwrites.
+- one handler per element per event type — the fake `addEventListener` overwrites;
+- the fake `window.setTimeout` runs anything under a second on `setImmediate`, so short
+  delays advance with the promise flush; only timers of a second or more stay real. A new
+  short timer therefore resolves inside `flush()`, a long one does not.
 
 A new element `id` has to be added to `index.html` **and** to the `ids` array in
 `test.js`, or `getElementById` returns `undefined` and the run dies at startup.
@@ -89,6 +92,10 @@ asserts the copied console holds neither the PIN nor the signed data.
 the start of each refresh, and a result reaches the DOM only while its generation is still
 current. Any new asynchronous render of those lists needs the same check.
 
+**Biometric success is shown, not just logged.** On a successful `loginBio` the popup
+turns its fingerprint green for `BIO_SUCCESS_MS` and only then closes — every success
+path goes through `flashBioSuccess()`, every failure through `hideBioPopup()`.
+
 **Plugin error codes** are matched on the message prefix via `hasErrorCode(error, 19)`:
 19 means a login is required, 93 that the login already happened.
 
@@ -116,14 +123,17 @@ the served `script.js` carries the expected `?v=` (§6).
 
 ## Settled decisions
 
-- **The key list refreshes only on the "Обновить" button.** Neither a successful PIN login
-  nor key creation calls `refreshKeys()`; they show a hint through `showKeyListHint()`,
-  and `test.js` asserts both. The reason is not recorded anywhere: it is *not* about
-  speed — the owner confirmed keys read fine (2026-09-14). Keep the behaviour and the
-  assertions as they are; changing them is his call, not a cleanup.
-- **A default PIN is hard-coded on `#pinInput` in `index.html`.** The owner keeps it there
-  for convenience (2026-09-14): the page is usable at a stand without typing. Do not
-  change or remove the value; `test.js` asserts it stays.
+- **The key list refreshes itself after creating and after deleting a key**, on the
+  owner's instruction (2026-09-14) — this reverses the earlier "only on the button"
+  decision. A successful PIN login still does *not* refresh it: the user presses
+  "Обновить" or performs a key operation. `test.js` asserts both halves.
+- **A key is either biometric or not.** There is no unknown state in the list: the owner
+  says such keys do not exist, so `refreshKeys()` renders 🔬 or 🔑 and never a third
+  icon, whatever `isLoginBioRequired` failed to tell us.
+- **A default PIN is hard-coded on `#pinInput` in `index.html`, in plain text.** The owner
+  keeps the value for convenience and chose `type="text"` deliberately (2026-09-14), so
+  the PIN is readable on screen. Do not change the value and do not "fix" the field back
+  to `type="password"`; `test.js` asserts both.
 - **The plugin loader is fetched from Aktiv's demo portal, unpinned and not vendored.**
   The owner decided against any pinning (2026-09-14): the demo depends on a custom plugin
   and browser extension that may change any day, and the page has to keep working with
