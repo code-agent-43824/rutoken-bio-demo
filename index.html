@@ -86,7 +86,7 @@
           <div class="step-number">2</div>
           <h3>Войдите по PIN-коду</h3>
           <p class="step-desc">Введите PIN пользователя токена</p>
-          <input type="password" id="pinInput" placeholder="PIN-код" autocomplete="current-password" class="step-input" aria-label="PIN-код пользователя">
+          <input type="password" id="pinInput" value="12345678" autocomplete="current-password" class="step-input" aria-label="PIN-код пользователя">
           <div class="step-buttons">
             <button type="button" id="btnLogin" class="btn btn-primary btn-sm">Войти</button>
             <button type="button" id="btnLogout" class="btn btn-sm">Выйти</button>
@@ -103,16 +103,28 @@
             <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_256" selected>ГОСТ Р 34.10-2012 256</option>
             <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_512">ГОСТ Р 34.10-2012 512</option>
           </select>
-          <input type="text" id="keyMarker" placeholder="Маркер (напр. TestKey)" class="step-input">
+          <input type="text" id="keyMarker" placeholder="Название ключа (напр. TestKey)" class="step-input" aria-label="Название ключа">
           <label class="step-checkbox">
             <input type="checkbox" id="useBio"> 🔬 С биометрией
           </label>
           <button type="button" id="btnCreateKey" class="btn btn-primary btn-sm">Создать пару</button>
         </div>
 
-        <!-- Шаг 4 — Подпись -->
+        <!-- Шаг 4 — Ключевые пары -->
         <div class="step-card">
           <div class="step-number">4</div>
+          <h3>Выберите ключ</h3>
+          <p class="step-desc">🔬 био · 🔑 без био · ❔ не определено</p>
+          <select id="keyList" size="4" class="step-select" aria-label="Ключевые пары"></select>
+          <div class="step-buttons">
+            <button type="button" id="btnRefreshKeys" class="btn btn-sm">Обновить</button>
+            <button type="button" id="btnDeleteKey" class="btn btn-sm">Удалить</button>
+          </div>
+        </div>
+
+        <!-- Шаг 5 — Подпись -->
+        <div class="step-card">
+          <div class="step-number">5</div>
           <h3>Подпишите данные</h3>
           <p class="step-desc">При подписи на био-ключе появится попап</p>
           <textarea id="signData" rows="2" placeholder="Данные для подписи" class="step-textarea"></textarea>
@@ -127,28 +139,15 @@
     </div>
   </section>
 
-  <!-- ===== КЛЮЧЕВЫЕ ПАРЫ ===== -->
-  <section class="keys-section">
-    <div class="section-inner">
-      <h2 class="section-title">Ключевые пары</h2>
-      <p class="section-subtitle">Управление созданными ключами на токене</p>
-
-      <div class="keys-panel">
-        <select id="keyList" size="6" class="step-select" aria-label="Ключевые пары"></select>
-        <div class="keys-buttons">
-          <button type="button" id="btnRefreshKeys" class="btn btn-sm">Обновить</button>
-          <button type="button" id="btnDeleteKey" class="btn btn-sm">Удалить</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ===== КОНСОЛЬ ЛОГОВ ===== -->
-  <section class="console-section">
+  <section id="consoleSection" class="console-section">
     <div class="section-inner">
       <div class="console-header">
         <h2>Журнал операций</h2>
-        <button type="button" id="btnClearConsole" class="btn btn-sm">Очистить</button>
+        <div class="console-actions">
+          <button type="button" id="btnCopyConsole" class="btn btn-sm">Копировать всё</button>
+          <button type="button" id="btnClearConsole" class="btn btn-sm">Очистить</button>
+        </div>
       </div>
       <div id="console" class="console-output"></div>
     </div>
@@ -156,6 +155,7 @@
 
   <!-- ===== БИО-КНОПКИ (правый верхний угол) ===== -->
   <div class="bio-buttons-top-right">
+    <button type="button" id="btnToggleLogs" class="bio-btn small log-toggle">Показать подробные логи</button>
     <button type="button" id="btnLoginBio" class="bio-btn small">Войти по биометрии</button>
     <button type="button" id="btnLogoutBio" class="bio-btn small">Выйти по биометрии</button>
     <button type="button" id="btnStopLoginBio" class="bio-btn small">Остановить проверку био</button>
