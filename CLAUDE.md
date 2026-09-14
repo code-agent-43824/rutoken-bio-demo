@@ -110,8 +110,10 @@ the served `script.js` carries the expected `?v=` (§6).
 ## Settled decisions
 
 - **The key list refreshes only on the "Обновить" button.** Neither a successful PIN login
-  nor key creation calls `refreshKeys()`; they show a hint through `showKeyListHint()`.
-  Enumerating keys is slow on the token, and the tests pin this behaviour.
+  nor key creation calls `refreshKeys()`; they show a hint through `showKeyListHint()`,
+  and `test.js` asserts both. The reason is not recorded anywhere: it is *not* about
+  speed — the owner confirmed keys read fine (2026-09-14). Keep the behaviour and the
+  assertions as they are; changing them is his call, not a cleanup.
 - **A default PIN is hard-coded on `#pinInput` in `index.html`.** The owner keeps it there
   for convenience (2026-09-14): the page is usable at a stand without typing. Do not
   change or remove the value; `test.js` asserts it stays.
