@@ -130,7 +130,9 @@ global.window = {
     language: 'ru-RU',
     clipboard: { writeText: function(text) { calls.copiedText = text; return Promise.resolve(); } }
   },
-  setTimeout: setTimeout,
+  // короткие таймеры (зелёная вспышка попапа) прокручиваются вместе с промисами,
+  // длинные (ожидание генерации ключа) остаются настоящими и отменяются clearTimeout
+  setTimeout: function(fn, ms) { return ms >= 1000 ? setTimeout(fn, ms) : setImmediate(fn); },
   clearTimeout: clearTimeout,
   rutoken: {
     ready: Promise.resolve(),
@@ -149,6 +151,8 @@ function flush(times) {
 (async function() {
   const html = fs.readFileSync('index.html', 'utf8');
   assert.match(html, /id="pinInput" value="12345678"/, 'PIN по умолчанию должен быть задан в HTML');
+  assert.match(html, /<input type="text" id="pinInput"/, 'PIN показывается открытым текстом — решение владельца');
+  assert.doesNotMatch(html, /❔/, 'неопределённого состояния ключа не существует');
   assert.equal((html.match(/class="step-number"/g) || []).length, 5, 'интерфейс должен содержать пять шагов');
 
   require('./script.js');
@@ -181,32 +185,31 @@ function flush(times) {
   elements.keyMarker.value = 'Читаемая метка';
   elements.useBio.checked = true;
   elements.btnCreateKey.dispatch('click');
-  await flush(7);
+  await flush(12);
   assert.equal(calls.generateOptions.publicKeyAlgorithm, 42, 'в API должна передаваться константа алгоритма');
   assert.equal(calls.generateOptions.keySpec, 7, 'должен создаваться ключ подписи');
   assert.equal(calls.generateOptions.linkToBiometrics, true, 'биометрическая защита должна запрашиваться явно');
   assert.equal(calls.loginBio, 1, 'неопределённый счётчик попыток должен проверяться реальным био-входом, а не блокировать генерацию');
   assert.deepEqual(calls.setKeyLabels[0], { deviceId: 2, keyId: '0123456789ABCDEF0003', label: 'Читаемая метка' });
-  assert.match(elements.keyList.options[0].textContent, /Нажмите «Обновить»/, 'после создания список не должен обновляться автоматически');
-  elements.btnRefreshKeys.dispatch('click');
-  await flush(5);
-  assert.equal(elements.keyList.options.length, 3, 'созданный ключ должен добавляться к существующим, а не заменять их');
-  assert.match(elements.keyList.options[2].textContent, /Читаемая метка/);
+  assert.equal(elements.keyList.options.length, 3, 'после создания список должен обновляться сам и сохранять прежние ключи');
+  assert.match(elements.keyList.options[2].textContent, /^🔬 Читаемая метка/, 'созданный био-ключ должен быть помечен как биометрический');
 
   elements.keyList.value = '0123456789ABCDEF0001';
   elements.signData.value = 'СЕКРЕТНЫЙ_ТЕКСТ_123';
   elements.btnSign.dispatch('click');
-  await flush(5);
+  await flush(10);
   assert.equal(calls.signDevice, 2, 'подпись должна использовать выбранное устройство');
   assert.equal(calls.signOptions.computeHash, true, 'текстовые данные должны хешироваться перед подписью');
   assert.equal(calls.logoutBio, 2, 'после предварительной проверки и био-подписи должен выполняться выход');
 
   elements.keyList.value = '0123456789ABCDEF0001';
   elements.btnDeleteKey.dispatch('click');
-  await flush(5);
+  await flush(12);
   assert.equal(calls.loginBio, 3, 'перед удалением био-ключа должен запрашиваться отпечаток для этого ключа');
   assert.equal(calls.logoutBio, 3, 'после удаления био-ключа должен выполняться выход по биометрии');
   assert.equal(keyIds.includes('0123456789ABCDEF0001'), false, 'био-ключ должен быть удалён после аутентификации');
+  assert.equal(elements.keyList.options.length, 2, 'после удаления список должен обновляться сам');
+  assert.doesNotMatch(elements.keyList.options.map(function(option) { return option.textContent; }).join('|'), /Био ключ/, 'удалённого ключа в списке быть не должно');
 
   elements.bioPopup.style.display = 'flex';
   elements.btnStopLoginBio.dispatch('click');

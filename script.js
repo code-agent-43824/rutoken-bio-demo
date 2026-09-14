@@ -2,7 +2,8 @@
 (function() {
   'use strict';
 
-  const BUILD_ID = '2026-09-14.4';
+  const BUILD_ID = '2026-09-14.5';
+  const BIO_SUCCESS_MS = 900;
   let plugin = null;
   let currentDevice = null;
   let deviceRefreshGeneration = 0;
@@ -175,7 +176,7 @@
 
   function normalizeDeviceLabel(label) {
     const raw = String(label || '').trim();
-    const suffix = raw.replace(/^Rutoken ECP\s*/i, '').trim();
+    const suffix = raw.replace(/^Rutoken(\s+ECP)?\s*/i, '').trim();
     if (!suffix || /^<no label>$/i.test(suffix)) return 'Рутокен Био (без метки)';
     return 'Рутокен Био ' + suffix;
   }
@@ -302,7 +303,7 @@
       }
       keys.forEach(function(key) {
         const option = document.createElement('option');
-        const icon = key.protection === true ? '🔬' : (key.protection === false ? '🔑' : '❔');
+        const icon = key.protection === true ? '🔬' : '🔑';
         option.value = key.id;
         option.textContent = icon + ' ' + (key.label || 'Ключ без метки') + ' · ' + shortKeyId(key.id);
         keyList.appendChild(option);
@@ -336,11 +337,12 @@
     return trace('bio.preflightLogin', { deviceId: deviceId, timeout: 30000 }, function() {
       return performBioLogin(deviceId, { timeout: 30000 });
     }).then(function(success) {
-      hideBioPopup();
-      if (!success) throw new Error('Не удалось подтвердить готовность биометрии');
-      bioReadyConfirmed = true;
-      bioSessionActive = true;
-      log('Готовность биометрии подтверждена', 'success');
+      if (!success) { hideBioPopup(); throw new Error('Не удалось подтвердить готовность биометрии'); }
+      return flashBioSuccess().then(function() {
+        bioReadyConfirmed = true;
+        bioSessionActive = true;
+        log('Готовность биометрии подтверждена', 'success');
+      });
     }).catch(function(error) {
       hideBioPopup();
       throw error;
@@ -380,12 +382,13 @@
       return trace('bio.' + operation + '.login', { deviceId: deviceId, objectId: String(keyId), timeout: 30000 }, function() {
         return performBioLogin(deviceId, { objectId: keyId, timeout: 30000 });
       }).then(function(success) {
-        hideBioPopup();
-        if (!success) throw new Error('Биометрическая аутентификация не пройдена');
-        bioSessionActive = true;
-        bioReadyConfirmed = true;
-        log('Биометрическая аутентификация успешна', 'success');
-        return { needsLogout: true };
+        if (!success) { hideBioPopup(); throw new Error('Биометрическая аутентификация не пройдена'); }
+        return flashBioSuccess().then(function() {
+          bioSessionActive = true;
+          bioReadyConfirmed = true;
+          log('Биометрическая аутентификация успешна', 'success');
+          return { needsLogout: true };
+        });
       });
     }).catch(function(error) {
       hideBioPopup();
@@ -444,8 +447,8 @@
         debug('key.verifyProtection.error', { keyId: String(keyId), error: errorDetails(error) });
         log('Ключ создан, но проверить его биометрическую защиту не удалось: ' + errorMessage(error), 'warning');
       }).then(function() {
-        log('Ключевая пара «' + marker + '» создана. Нажмите «Обновить» в шаге 4.', 'success');
-        showKeyListHint('Нажмите «Обновить»');
+        log('Ключевая пара «' + marker + '» создана', 'success');
+        return refreshKeys();
       });
     }).catch(function(error) {
       log('Ошибка создания ключевой пары: ' + errorMessage(error), 'error');
@@ -466,7 +469,6 @@
       deleted = true;
       knownKeyProtection.delete(String(keyId));
       log('Ключевая пара удалена', 'success');
-      showKeyListHint('Нажмите «Обновить»');
     }).catch(function(error) {
       log('Ошибка удаления: ' + errorMessage(error), 'error');
     }).then(function() {
@@ -475,7 +477,9 @@
         .then(function() { bioSessionActive = false; })
         .catch(function(error) { log('Ошибка выхода по биометрии после удаления: ' + errorMessage(error), 'warning'); });
     }).then(function() {
-      if (deleted) debug('key.delete.completed', { keyId: keyId });
+      if (!deleted) return undefined;
+      debug('key.delete.completed', { keyId: keyId });
+      return refreshKeys();
     });
   }
 
@@ -518,12 +522,13 @@
       return trace('bio.loginForSign', { deviceId: deviceId, objectId: keyId, timeout: 30000 }, function() {
         return performBioLogin(deviceId, { objectId: keyId, timeout: 30000 });
       }).then(function(success) {
-        hideBioPopup();
-        if (!success) throw new Error('Биометрическая аутентификация не пройдена');
-        bioSessionActive = true;
-        bioReadyConfirmed = true;
-        log('Биометрическая аутентификация успешна', 'success');
-        return doSign(deviceId, keyId, data).then(function() {
+        if (!success) { hideBioPopup(); throw new Error('Биометрическая аутентификация не пройдена'); }
+        return flashBioSuccess().then(function() {
+          bioSessionActive = true;
+          bioReadyConfirmed = true;
+          log('Биометрическая аутентификация успешна', 'success');
+          return doSign(deviceId, keyId, data);
+        }).then(function() {
           return trace('bio.logoutAfterSign', { deviceId: deviceId }, function() { return plugin.logoutBio(deviceId); }).then(function() { bioSessionActive = false; });
         });
       });
@@ -536,9 +541,10 @@
     const deviceId = currentDevice;
     showBioPopup();
     trace('bio.login', { deviceId: deviceId, timeout: 30000 }, function() { return performBioLogin(deviceId, { timeout: 30000 }); }).then(function(success) {
-      hideBioPopup();
-      if (!success) { log('Биометрическая аутентификация не пройдена', 'warning'); return; }
-      bioSessionActive = true; bioReadyConfirmed = true; log('Вход по биометрии выполнен', 'success');
+      if (!success) { hideBioPopup(); log('Биометрическая аутентификация не пройдена', 'warning'); return undefined; }
+      return flashBioSuccess().then(function() {
+        bioSessionActive = true; bioReadyConfirmed = true; log('Вход по биометрии выполнен', 'success');
+      });
     }).catch(function(error) { hideBioPopup(); log('Ошибка входа по биометрии: ' + errorMessage(error), 'error'); });
   }
   function logoutBio() {
@@ -554,8 +560,14 @@
       hideBioPopup(); bioSessionActive = false; log('Проверка биометрии остановлена', 'warning');
     }).catch(function(error) { hideBioPopup(); log('Ошибка остановки: ' + errorMessage(error), 'error'); });
   }
-  function showBioPopup() { bioPopup.style.display = 'flex'; }
-  function hideBioPopup() { bioPopup.style.display = 'none'; }
+  function showBioPopup() { bioPopup.classList.remove('success'); bioPopup.style.display = 'flex'; }
+  function hideBioPopup() { bioPopup.classList.remove('success'); bioPopup.style.display = 'none'; }
+  function flashBioSuccess() {
+    bioPopup.classList.add('success');
+    return new Promise(function(resolve) {
+      window.setTimeout(function() { hideBioPopup(); resolve(); }, BIO_SUCCESS_MS);
+    });
+  }
 
   function init() {
     document.getElementById('btnRefreshDevices').addEventListener('click', refreshDevices);
