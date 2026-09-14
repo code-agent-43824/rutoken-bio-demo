@@ -2,12 +2,13 @@
 (function() {
   'use strict';
 
-  const BUILD_ID = '2026-09-14.1';
+  const BUILD_ID = '2026-09-14.2';
   let plugin = null;
   let currentDevice = null;
   let deviceRefreshGeneration = 0;
   let keyRefreshGeneration = 0;
   let bioSessionActive = false;
+  let bioReadyConfirmed = false;
   const deviceIds = new Map();
   const deviceProfiles = new Map();
   const knownKeyProtection = new Map();
@@ -200,6 +201,7 @@
       deviceIds.clear();
       deviceProfiles.clear();
       currentDevice = null;
+      bioReadyConfirmed = false;
       if (!profiles.length) { log('Нет подключённых устройств', 'warning'); return; }
       profiles.forEach(function(profile) {
         const stringId = String(profile.id);
@@ -223,6 +225,7 @@
     currentDevice = deviceIds.get(deviceList.value);
     if (typeof currentDevice === 'undefined') return;
     bioSessionActive = false;
+    bioReadyConfirmed = false;
     debug('device.selected', { deviceId: currentDevice, profile: deviceProfiles.get(String(currentDevice)) });
     refreshKeys();
   }
@@ -292,11 +295,36 @@
     });
   }
 
-  function bioAttemptsAvailable(attempts) {
-    if (!attempts || typeof attempts !== 'object') return false;
-    const maximum = Number(attempts.attemptsMax);
-    const left = Number(attempts.attemptsLeft);
-    return Number.isFinite(maximum) && Number.isFinite(left) && maximum > 0 && left > 0;
+  function finiteBioCounter(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
+    return null;
+  }
+  function describeBioCounter(value) {
+    return { type: typeof value, value: typeof value === 'number' && !Number.isFinite(value) ? String(value) : value };
+  }
+  function confirmBioReady(deviceId) {
+    if (bioReadyConfirmed) return Promise.resolve();
+    log('Счётчик попыток недоступен. Подтвердите готовность биометрии отпечатком…', 'warning');
+    showBioPopup();
+    return trace('bio.preflightLogin', { deviceId: deviceId, timeout: 30000 }, function() {
+      return performBioLogin(deviceId, { timeout: 30000 });
+    }).then(function(success) {
+      hideBioPopup();
+      if (!success) throw new Error('Не удалось подтвердить готовность биометрии');
+      bioReadyConfirmed = true;
+      bioSessionActive = true;
+      log('Готовность биометрии подтверждена', 'success');
+    }).catch(function(error) {
+      hideBioPopup();
+      throw error;
+    });
+  }
+  function closeBioSessionBeforeGeneration(deviceId) {
+    if (!bioSessionActive) return Promise.resolve();
+    return trace('bio.logoutBeforeGeneration', { deviceId: deviceId }, function() {
+      return plugin.logoutBio(deviceId);
+    }).then(function() { bioSessionActive = false; });
   }
   function preflightBioKey(deviceId) {
     if (typeof plugin.TOKEN_INFO_BIO_ATTEMPTS_INFO === 'undefined') return Promise.reject(new Error('Версия плагина не позволяет проверить готовность биометрии'));
@@ -307,8 +335,21 @@
     return trace('bio.preflightAttempts', { deviceId: deviceId }, function() {
       return plugin.getDeviceInfo(deviceId, plugin.TOKEN_INFO_BIO_ATTEMPTS_INFO);
     }).then(function(attempts) {
-      if (!bioAttemptsAvailable(attempts)) throw new Error('Биометрия не инициализирована, заблокирована или сведения о попытках недоступны');
-      return attempts;
+      const maximum = finiteBioCounter(attempts && attempts.attemptsMax);
+      const left = finiteBioCounter(attempts && attempts.attemptsLeft);
+      debug('bio.preflightCounters', {
+        attemptsMax: describeBioCounter(attempts && attempts.attemptsMax),
+        attemptsLeft: describeBioCounter(attempts && attempts.attemptsLeft),
+        normalizedMax: maximum,
+        normalizedLeft: left
+      });
+      if (maximum !== null && maximum <= 0) throw new Error('Биометрия не инициализирована или максимальное число попыток равно нулю');
+      if (left !== null && left <= 0) throw new Error('Биометрическая аутентификация заблокирована: попыток не осталось');
+      if (maximum === null || left === null) return confirmBioReady(deviceId);
+      bioReadyConfirmed = true;
+      return undefined;
+    }).then(function() {
+      return closeBioSessionBeforeGeneration(deviceId);
     });
   }
   function verifyCreatedKey(deviceId, keyId, requestedBio) {
@@ -417,6 +458,7 @@
         hideBioPopup();
         if (!success) throw new Error('Биометрическая аутентификация не пройдена');
         bioSessionActive = true;
+        bioReadyConfirmed = true;
         log('Биометрическая аутентификация успешна', 'success');
         return doSign(deviceId, keyId, data).then(function() {
           return trace('bio.logoutAfterSign', { deviceId: deviceId }, function() { return plugin.logoutBio(deviceId); }).then(function() { bioSessionActive = false; });
@@ -433,7 +475,7 @@
     trace('bio.login', { deviceId: deviceId, timeout: 30000 }, function() { return performBioLogin(deviceId, { timeout: 30000 }); }).then(function(success) {
       hideBioPopup();
       if (!success) { log('Биометрическая аутентификация не пройдена', 'warning'); return; }
-      bioSessionActive = true; log('Вход по биометрии выполнен', 'success'); refreshKeys();
+      bioSessionActive = true; bioReadyConfirmed = true; log('Вход по биометрии выполнен', 'success'); refreshKeys();
     }).catch(function(error) { hideBioPopup(); log('Ошибка входа по биометрии: ' + errorMessage(error), 'error'); });
   }
   function logoutBio() {

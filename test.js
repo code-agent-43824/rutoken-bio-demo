@@ -63,7 +63,7 @@ global.document = {
 };
 global.confirm = function() { return true; };
 
-const calls = { logoutBio: 0, setKeyLabels: [] };
+const calls = { loginBio: 0, logoutBio: 0, setKeyLabels: [] };
 let keyIds = ['0123456789ABCDEF0001', '0123456789ABCDEF0002'];
 const labels = {
   '0123456789ABCDEF0001': 'Био ключ',
@@ -85,7 +85,7 @@ const plugin = {
     if (option === this.TOKEN_INFO_LABEL) return Promise.resolve(deviceId === 1 ? 'Rutoken ECP <no label>' : 'Rutoken ECP Office');
     if (option === this.TOKEN_INFO_MODEL) return Promise.resolve('Rutoken BIO');
     if (option === this.TOKEN_INFO_FEATURES) return Promise.resolve({ bio: 1 });
-    if (option === this.TOKEN_INFO_BIO_ATTEMPTS_INFO) return Promise.resolve({ attemptsMax: 5, attemptsLeft: 5 });
+    if (option === this.TOKEN_INFO_BIO_ATTEMPTS_INFO) return Promise.resolve({ attemptsMax: null, attemptsLeft: null });
     return Promise.reject(new Error('unknown option'));
   },
   enumerateKeys: function() { return Promise.resolve(keyIds.slice()); },
@@ -107,7 +107,7 @@ const plugin = {
   },
   deleteKeyPair: function() { return Promise.resolve(); },
   isLoginBioRequired: function(deviceId, keyId) { return Promise.resolve(bioKeys.has(keyId)); },
-  loginBio: function(deviceId, options, callback) { callback(true); return Promise.resolve(); },
+  loginBio: function(deviceId, options, callback) { calls.loginBio += 1; callback(true); return Promise.resolve(); },
   rawSign: function(deviceId, keyId, data, options) {
     calls.signDevice = deviceId;
     calls.signOptions = options;
@@ -173,6 +173,7 @@ function flush(times) {
   assert.equal(calls.generateOptions.publicKeyAlgorithm, 42, 'в API должна передаваться константа алгоритма');
   assert.equal(calls.generateOptions.keySpec, 7, 'должен создаваться ключ подписи');
   assert.equal(calls.generateOptions.linkToBiometrics, true, 'биометрическая защита должна запрашиваться явно');
+  assert.equal(calls.loginBio, 1, 'неопределённый счётчик попыток должен проверяться реальным био-входом, а не блокировать генерацию');
   assert.deepEqual(calls.setKeyLabels[0], { deviceId: 2, keyId: '0123456789ABCDEF0003', label: 'Читаемая метка' });
   assert.equal(elements.keyList.options.length, 3, 'созданный ключ должен добавляться к существующим, а не заменять их');
   assert.match(elements.keyList.options[2].textContent, /Читаемая метка/);
@@ -183,7 +184,7 @@ function flush(times) {
   await flush(5);
   assert.equal(calls.signDevice, 2, 'подпись должна использовать выбранное устройство');
   assert.equal(calls.signOptions.computeHash, true, 'текстовые данные должны хешироваться перед подписью');
-  assert.equal(calls.logoutBio, 1, 'после био-подписи должен выполняться выход');
+  assert.equal(calls.logoutBio, 2, 'после предварительной проверки и био-подписи должен выполняться выход');
 
   elements.bioPopup.style.display = 'flex';
   elements.btnStopLoginBio.dispatch('click');
