@@ -50,9 +50,10 @@ implements:
 A new element `id` has to be added to `index.html` **and** to the `ids` array in
 `test.js`, or `getElementById` returns `undefined` and the run dies at startup.
 
-The tests assert on markup (`value="12345678"` on `#pinInput`, exactly five
-`.step-number`), on exact UI strings (`'Плагин загружен ✓'` and others) and on the key
-icons (🔬 / 🔑 / ❔). Change the wording and `test.js` in the same commit (§10).
+The tests assert on markup (the default PIN on `#pinInput`, the number of
+`.step-number` cards), on exact UI strings and on the key icons. The values live in
+`index.html` and `script.js`; `test.js` is where they are pinned. Change the wording
+and the assertion in the same commit (§10).
 
 ### Invariants
 
@@ -111,10 +112,14 @@ the served `script.js` carries the expected `?v=` (§6).
 - **The key list refreshes only on the "Обновить" button.** Neither a successful PIN login
   nor key creation calls `refreshKeys()`; they show a hint through `showKeyListHint()`.
   Enumerating keys is slow on the token, and the tests pin this behaviour.
-- **The default PIN `12345678` sits in `index.html`.** It is the factory PIN of a demo
-  token, kept so the page is usable at a stand without typing; a test asserts it.
-- **The plugin loader is fetched from Aktiv's demo portal, not vendored.** It keeps the
-  demo aligned with the reference page; there is no build step to pin a copy by hash.
+- **A default PIN is hard-coded on `#pinInput` in `index.html`.** It is there so the page
+  is usable at a stand without typing, and `test.js` asserts it stays. Whether that
+  particular value is right for the demo token is the owner's call, not a fact this
+  repository records.
+- **The plugin loader is fetched from Aktiv's demo portal, not vendored.** The demo is
+  meant to track the reference page (`docs/ROADMAP.md`), and there is no build step that
+  could pin a copy by hash. It is loaded without Subresource Integrity — an open question
+  for the owner, see `docs/PLAN.md`.
 - **UI text, project documents and log lines are Russian; code and commits are English** (§10).
 - **Commits go straight to `main`.** The harness starts cloud sessions on a branch
   (`claude/…`) and forbids pushing to the trunk unless the owner says otherwise; he said
