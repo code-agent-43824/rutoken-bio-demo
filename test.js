@@ -63,8 +63,9 @@ global.document = {
 };
 global.confirm = function() { return true; };
 
-const calls = { loginBio: 0, logoutBio: 0, setKeyLabels: [] };
+const calls = { enumerateKeys: 0, loginBio: 0, logoutBio: 0, setKeyLabels: [] };
 let keyIds = ['0123456789ABCDEF0001', '0123456789ABCDEF0002'];
+let fakeBioSession = false;
 const labels = {
   '0123456789ABCDEF0001': 'Био ключ',
   '0123456789ABCDEF0002': 'Обычный ключ'
@@ -88,7 +89,7 @@ const plugin = {
     if (option === this.TOKEN_INFO_BIO_ATTEMPTS_INFO) return Promise.resolve({ attemptsMax: null, attemptsLeft: null });
     return Promise.reject(new Error('unknown option'));
   },
-  enumerateKeys: function() { return Promise.resolve(keyIds.slice()); },
+  enumerateKeys: function() { calls.enumerateKeys += 1; return Promise.resolve(keyIds.slice()); },
   getKeyLabel: function(deviceId, keyId) { return Promise.resolve(labels[keyId] || ''); },
   login: function(deviceId, pin) { calls.loginDevice = deviceId; calls.pinLength = pin.length; return Promise.resolve(); },
   logout: function() { return Promise.resolve(); },
@@ -101,19 +102,24 @@ const plugin = {
     return Promise.resolve(keyId);
   },
   setKeyLabel: function(deviceId, keyId, label) {
+    if (bioKeys.has(keyId) && !fakeBioSession) return Promise.reject(new Error('19: User login required to perform an operation'));
     calls.setKeyLabels.push({ deviceId: deviceId, keyId: keyId, label: label });
     labels[keyId] = label;
     return Promise.resolve();
   },
-  deleteKeyPair: function() { return Promise.resolve(); },
-  isLoginBioRequired: function(deviceId, keyId) { return Promise.resolve(bioKeys.has(keyId)); },
-  loginBio: function(deviceId, options, callback) { calls.loginBio += 1; callback(true); return Promise.resolve(); },
+  deleteKeyPair: function(deviceId, keyId) {
+    if (bioKeys.has(keyId) && !fakeBioSession) return Promise.reject(new Error('19: User login required to perform an operation'));
+    keyIds = keyIds.filter(function(id) { return id !== keyId; });
+    return Promise.resolve();
+  },
+  isLoginBioRequired: function(deviceId, keyId) { return Promise.resolve(bioKeys.has(keyId) && !fakeBioSession); },
+  loginBio: function(deviceId, options, callback) { calls.loginBio += 1; fakeBioSession = true; callback(true); return Promise.resolve(); },
   rawSign: function(deviceId, keyId, data, options) {
     calls.signDevice = deviceId;
     calls.signOptions = options;
     return Promise.resolve('signature');
   },
-  logoutBio: function() { calls.logoutBio += 1; return Promise.resolve(); },
+  logoutBio: function() { calls.logoutBio += 1; fakeBioSession = false; return Promise.resolve(); },
   stopLoginBio: function() { return Promise.resolve(); }
 };
 
@@ -153,9 +159,8 @@ function flush(times) {
   assert.deepEqual(elements.deviceList.options.map(function(option) { return option.textContent; }), [
     'Рутокен Био (без метки)', 'Рутокен Био Office'
   ]);
-  assert.equal(elements.keyList.options.length, 2, 'в списке должны сохраняться обе ключевые пары');
-  assert.match(elements.keyList.options[0].textContent, /^🔬 Био ключ/);
-  assert.match(elements.keyList.options[1].textContent, /^🔑 Обычный ключ/);
+  assert.equal(calls.enumerateKeys, 0, 'при обнаружении устройства ключи не должны запрашиваться до команды пользователя');
+  assert.match(elements.keyList.options[0].textContent, /Войдите по PIN/);
 
   elements.deviceList.value = '2';
   elements.deviceList.dispatch('change');
@@ -164,6 +169,13 @@ function flush(times) {
   await flush(4);
   assert.equal(calls.loginDevice, 2, 'выбор устройства должен применяться ко входу');
   assert.equal(calls.pinLength, 8);
+  assert.equal(calls.enumerateKeys, 0, 'успешный вход не должен автоматически искать ключи');
+
+  elements.btnRefreshKeys.dispatch('click');
+  await flush(5);
+  assert.equal(elements.keyList.options.length, 2, 'по запросу пользователя должны отображаться обе ключевые пары');
+  assert.match(elements.keyList.options[0].textContent, /^🔬 Био ключ/);
+  assert.match(elements.keyList.options[1].textContent, /^🔑 Обычный ключ/);
 
   elements.keyAlgorithm.value = 'PUBLIC_KEY_ALGORITHM_GOST3410_2012_256';
   elements.keyMarker.value = 'Читаемая метка';
@@ -175,6 +187,9 @@ function flush(times) {
   assert.equal(calls.generateOptions.linkToBiometrics, true, 'биометрическая защита должна запрашиваться явно');
   assert.equal(calls.loginBio, 1, 'неопределённый счётчик попыток должен проверяться реальным био-входом, а не блокировать генерацию');
   assert.deepEqual(calls.setKeyLabels[0], { deviceId: 2, keyId: '0123456789ABCDEF0003', label: 'Читаемая метка' });
+  assert.match(elements.keyList.options[0].textContent, /Нажмите «Обновить»/, 'после создания список не должен обновляться автоматически');
+  elements.btnRefreshKeys.dispatch('click');
+  await flush(5);
   assert.equal(elements.keyList.options.length, 3, 'созданный ключ должен добавляться к существующим, а не заменять их');
   assert.match(elements.keyList.options[2].textContent, /Читаемая метка/);
 
@@ -185,6 +200,13 @@ function flush(times) {
   assert.equal(calls.signDevice, 2, 'подпись должна использовать выбранное устройство');
   assert.equal(calls.signOptions.computeHash, true, 'текстовые данные должны хешироваться перед подписью');
   assert.equal(calls.logoutBio, 2, 'после предварительной проверки и био-подписи должен выполняться выход');
+
+  elements.keyList.value = '0123456789ABCDEF0001';
+  elements.btnDeleteKey.dispatch('click');
+  await flush(5);
+  assert.equal(calls.loginBio, 3, 'перед удалением био-ключа должен запрашиваться отпечаток для этого ключа');
+  assert.equal(calls.logoutBio, 3, 'после удаления био-ключа должен выполняться выход по биометрии');
+  assert.equal(keyIds.includes('0123456789ABCDEF0001'), false, 'био-ключ должен быть удалён после аутентификации');
 
   elements.bioPopup.style.display = 'flex';
   elements.btnStopLoginBio.dispatch('click');

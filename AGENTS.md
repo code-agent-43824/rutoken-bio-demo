@@ -117,8 +117,11 @@ login() → plugin.login(currentDevice, pin)
 // Создание ключевой пары
 createKeyPair() → проверка состояния биометрии → plugin.generateKeyPair(currentDevice, undefined, marker, options)
   // options.linkToBiometrics = true если чекбокс включён
+  → для био-ключа plugin.loginBio(deviceId, {objectId: keyId}, callback)
   → plugin.setKeyLabel(deviceId, keyId, marker)
   → plugin.isLoginBioRequired(deviceId, keyId)
+
+Список ключей загружается только по явному нажатию «Обновить» после PIN-входа. Удаление био-ключа следует официальной последовательности `isLoginBioRequired → loginBio(objectId) → deleteKeyPair → logoutBio`.
 
 // Подпись данных
 signData():

@@ -2,7 +2,7 @@
 (function() {
   'use strict';
 
-  const BUILD_ID = '2026-09-14.2';
+  const BUILD_ID = '2026-09-14.3';
   let plugin = null;
   let currentDevice = null;
   let deviceRefreshGeneration = 0;
@@ -51,6 +51,9 @@
     };
   }
   function errorMessage(error) { return errorDetails(error).message; }
+  function hasErrorCode(error, code) {
+    return new RegExp('^' + code + '(?:\\D|$)').test(errorMessage(error));
+  }
   function debug(eventName, details) {
     appendLog('[DEBUG] ' + eventName + (typeof details === 'undefined' ? '' : ' ' + safeJson(details)), 'debug');
   }
@@ -99,6 +102,15 @@
     const value = keyList.value;
     if (!value) log('Ключ не выбран', 'error');
     return value || null;
+  }
+  function showKeyListHint(message) {
+    ++keyRefreshGeneration;
+    keyList.innerHTML = '';
+    const option = document.createElement('option');
+    option.textContent = message;
+    option.value = '';
+    option.disabled = true;
+    keyList.appendChild(option);
   }
   function setConnectionStatus(text, connected) {
     connectionStatus.textContent = text;
@@ -197,7 +209,7 @@
     }).then(function(profiles) {
       if (generation !== deviceRefreshGeneration) { debug('device.refresh.stale', { generation: generation, currentGeneration: deviceRefreshGeneration }); return; }
       deviceList.innerHTML = '';
-      keyList.innerHTML = '';
+      showKeyListHint('Войдите по PIN и нажмите «Обновить»');
       deviceIds.clear();
       deviceProfiles.clear();
       currentDevice = null;
@@ -216,7 +228,6 @@
       deviceList.value = String(profiles[0].id);
       currentDevice = profiles[0].id;
       log('Найдено устройств: ' + profiles.length, 'success');
-      return refreshKeys();
     }).catch(function(error) {
       if (generation === deviceRefreshGeneration) log('Ошибка получения списка устройств: ' + errorMessage(error), 'error');
     });
@@ -227,7 +238,7 @@
     bioSessionActive = false;
     bioReadyConfirmed = false;
     debug('device.selected', { deviceId: currentDevice, profile: deviceProfiles.get(String(currentDevice)) });
-    refreshKeys();
+    showKeyListHint('Войдите по PIN и нажмите «Обновить»');
   }
 
   function login() {
@@ -235,14 +246,23 @@
     const deviceId = currentDevice;
     const pin = pinInput.value;
     trace('auth.loginPin', { deviceId: deviceId, pinLength: pin.length }, function() { return plugin.login(deviceId, pin); }).then(function() {
-      log('Вход выполнен успешно', 'success'); refreshKeys();
-    }).catch(function(error) { log('Ошибка входа: ' + errorMessage(error), 'error'); });
+      log('Вход выполнен успешно. Нажмите «Обновить» в шаге 4.', 'success');
+      showKeyListHint('Нажмите «Обновить»');
+    }).catch(function(error) {
+      if (hasErrorCode(error, 93)) {
+        log('Вход уже выполнен. Нажмите «Обновить» в шаге 4.', 'success');
+        showKeyListHint('Нажмите «Обновить»');
+        return;
+      }
+      log('Ошибка входа: ' + errorMessage(error), 'error');
+    });
   }
   function logout() {
     if (!plugin || currentDevice === null) return;
     const deviceId = currentDevice;
     trace('auth.logoutPin', { deviceId: deviceId }, function() { return plugin.logout(deviceId); }).then(function() {
       log('Выход выполнен', 'success');
+      showKeyListHint('Войдите по PIN и нажмите «Обновить»');
     }).catch(function(error) { log('Ошибка выхода: ' + errorMessage(error), 'error'); });
   }
 
@@ -291,7 +311,13 @@
       keyList.value = keys.some(function(key) { return key.id === selectedKey; }) ? selectedKey : keys[0].id;
       log('Найдено ключевых пар: ' + keys.length, 'success');
     }).catch(function(error) {
-      if (generation === keyRefreshGeneration) log('Ошибка получения списка ключей: ' + errorMessage(error), 'error');
+      if (generation !== keyRefreshGeneration) return;
+      if (hasErrorCode(error, 19)) {
+        showKeyListHint('Сначала войдите по PIN-коду');
+        log('Сначала выполните вход по PIN-коду, затем обновите список ключей', 'error');
+        return;
+      }
+      log('Ошибка получения списка ключей: ' + errorMessage(error), 'error');
     });
   }
 
@@ -320,12 +346,6 @@
       throw error;
     });
   }
-  function closeBioSessionBeforeGeneration(deviceId) {
-    if (!bioSessionActive) return Promise.resolve();
-    return trace('bio.logoutBeforeGeneration', { deviceId: deviceId }, function() {
-      return plugin.logoutBio(deviceId);
-    }).then(function() { bioSessionActive = false; });
-  }
   function preflightBioKey(deviceId) {
     if (typeof plugin.TOKEN_INFO_BIO_ATTEMPTS_INFO === 'undefined') return Promise.reject(new Error('Версия плагина не позволяет проверить готовность биометрии'));
     const profile = deviceProfiles.get(String(deviceId));
@@ -348,8 +368,28 @@
       if (maximum === null || left === null) return confirmBioReady(deviceId);
       bioReadyConfirmed = true;
       return undefined;
-    }).then(function() {
-      return closeBioSessionBeforeGeneration(deviceId);
+    });
+  }
+  function authorizeBioObject(deviceId, keyId, operation) {
+    return trace('bio.' + operation + '.isLoginRequired', { deviceId: deviceId, keyId: String(keyId) }, function() {
+      return plugin.isLoginBioRequired(deviceId, keyId);
+    }).then(function(required) {
+      if (!required) return { needsLogout: bioSessionActive };
+      log('Для операции с био-ключом приложите палец к датчику…');
+      showBioPopup();
+      return trace('bio.' + operation + '.login', { deviceId: deviceId, objectId: String(keyId), timeout: 30000 }, function() {
+        return performBioLogin(deviceId, { objectId: keyId, timeout: 30000 });
+      }).then(function(success) {
+        hideBioPopup();
+        if (!success) throw new Error('Биометрическая аутентификация не пройдена');
+        bioSessionActive = true;
+        bioReadyConfirmed = true;
+        log('Биометрическая аутентификация успешна', 'success');
+        return { needsLogout: true };
+      });
+    }).catch(function(error) {
+      hideBioPopup();
+      throw error;
     });
   }
   function verifyCreatedKey(deviceId, keyId, requestedBio) {
@@ -393,14 +433,20 @@
       if (typeof keyId === 'undefined' || keyId === null || keyId === '') throw new Error('Плагин не вернул идентификатор созданного ключа');
       knownKeyProtection.set(String(keyId), useBio);
       if (typeof plugin.setKeyLabel !== 'function') { log('Ключ создан, но установленная версия плагина не поддерживает читаемые метки', 'warning'); return keyId; }
-      return trace('key.setLabel', { deviceId: deviceId, keyId: String(keyId), label: marker }, function() {
-        return plugin.setKeyLabel(deviceId, keyId, marker);
+      const authorization = useBio ? authorizeBioObject(deviceId, keyId, 'setLabel') : Promise.resolve();
+      return authorization.then(function() {
+        return trace('key.setLabel', { deviceId: deviceId, keyId: String(keyId), label: marker }, function() {
+          return plugin.setKeyLabel(deviceId, keyId, marker);
+        });
       }).catch(function(error) { log('Ключ создан, но метку задать не удалось: ' + errorMessage(error), 'warning'); }).then(function() { return keyId; });
     }).then(function(keyId) {
       return verifyCreatedKey(deviceId, keyId, useBio).catch(function(error) {
         debug('key.verifyProtection.error', { keyId: String(keyId), error: errorDetails(error) });
         log('Ключ создан, но проверить его биометрическую защиту не удалось: ' + errorMessage(error), 'warning');
-      }).then(function() { log('Ключевая пара «' + marker + '» создана', 'success'); return refreshKeys(); });
+      }).then(function() {
+        log('Ключевая пара «' + marker + '» создана. Нажмите «Обновить» в шаге 4.', 'success');
+        showKeyListHint('Нажмите «Обновить»');
+      });
     }).catch(function(error) {
       log('Ошибка создания ключевой пары: ' + errorMessage(error), 'error');
       if (useBio) log('Проверьте, что отпечатки зарегистрированы, затем скопируйте подробный журнал.', 'warning');
@@ -411,9 +457,26 @@
     const keyId = getSelectedKey();
     if (!keyId || !confirm('Удалить ключевую пару?')) return;
     const deviceId = currentDevice;
-    trace('key.delete', { deviceId: deviceId, keyId: keyId }, function() { return plugin.deleteKeyPair(deviceId, keyId); }).then(function() {
-      knownKeyProtection.delete(String(keyId)); log('Ключевая пара удалена', 'success'); refreshKeys();
-    }).catch(function(error) { log('Ошибка удаления: ' + errorMessage(error), 'error'); });
+    let needsLogout = false;
+    let deleted = false;
+    authorizeBioObject(deviceId, keyId, 'delete').then(function(authResult) {
+      needsLogout = authResult.needsLogout;
+      return trace('key.delete', { deviceId: deviceId, keyId: keyId }, function() { return plugin.deleteKeyPair(deviceId, keyId); });
+    }).then(function() {
+      deleted = true;
+      knownKeyProtection.delete(String(keyId));
+      log('Ключевая пара удалена', 'success');
+      showKeyListHint('Нажмите «Обновить»');
+    }).catch(function(error) {
+      log('Ошибка удаления: ' + errorMessage(error), 'error');
+    }).then(function() {
+      if (!needsLogout || !bioSessionActive) return;
+      return trace('bio.logoutAfterDelete', { deviceId: deviceId }, function() { return plugin.logoutBio(deviceId); })
+        .then(function() { bioSessionActive = false; })
+        .catch(function(error) { log('Ошибка выхода по биометрии после удаления: ' + errorMessage(error), 'warning'); });
+    }).then(function() {
+      if (deleted) debug('key.delete.completed', { keyId: keyId });
+    });
   }
 
   function performBioLogin(deviceId, options) {
@@ -475,14 +538,14 @@
     trace('bio.login', { deviceId: deviceId, timeout: 30000 }, function() { return performBioLogin(deviceId, { timeout: 30000 }); }).then(function(success) {
       hideBioPopup();
       if (!success) { log('Биометрическая аутентификация не пройдена', 'warning'); return; }
-      bioSessionActive = true; bioReadyConfirmed = true; log('Вход по биометрии выполнен', 'success'); refreshKeys();
+      bioSessionActive = true; bioReadyConfirmed = true; log('Вход по биометрии выполнен', 'success');
     }).catch(function(error) { hideBioPopup(); log('Ошибка входа по биометрии: ' + errorMessage(error), 'error'); });
   }
   function logoutBio() {
     if (!plugin || currentDevice === null) return;
     const deviceId = currentDevice;
     trace('bio.logout', { deviceId: deviceId }, function() { return plugin.logoutBio(deviceId); }).then(function() {
-      bioSessionActive = false; log('Выход по биометрии выполнен', 'success'); refreshKeys();
+      bioSessionActive = false; log('Выход по биометрии выполнен', 'success');
     }).catch(function(error) { log('Ошибка выхода по биометрии: ' + errorMessage(error), 'error'); });
   }
   function stopLoginBio() {
