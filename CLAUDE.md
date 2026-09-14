@@ -112,14 +112,15 @@ the served `script.js` carries the expected `?v=` (§6).
 - **The key list refreshes only on the "Обновить" button.** Neither a successful PIN login
   nor key creation calls `refreshKeys()`; they show a hint through `showKeyListHint()`.
   Enumerating keys is slow on the token, and the tests pin this behaviour.
-- **A default PIN is hard-coded on `#pinInput` in `index.html`.** It is there so the page
-  is usable at a stand without typing, and `test.js` asserts it stays. Whether that
-  particular value is right for the demo token is the owner's call, not a fact this
-  repository records.
-- **The plugin loader is fetched from Aktiv's demo portal, not vendored.** The demo is
-  meant to track the reference page (`docs/ROADMAP.md`), and there is no build step that
-  could pin a copy by hash. It is loaded without Subresource Integrity — an open question
-  for the owner, see `docs/PLAN.md`.
+- **A default PIN is hard-coded on `#pinInput` in `index.html`.** The owner keeps it there
+  for convenience (2026-09-14): the page is usable at a stand without typing. Do not
+  change or remove the value; `test.js` asserts it stays.
+- **The plugin loader is fetched from Aktiv's demo portal, unpinned and not vendored.**
+  The owner decided against any pinning (2026-09-14): the demo depends on a custom plugin
+  and browser extension that may change any day, and the page has to keep working with
+  whatever version is current. Subresource Integrity or a vendored copy would break on
+  the next upstream change, so §7's SHA-256 pinning does not apply here. Do not add
+  `integrity=`, and do not reopen this.
 - **UI text, project documents and log lines are Russian; code and commits are English** (§10).
 - **Commits go straight to `main`.** The harness starts cloud sessions on a branch
   (`claude/…`) and forbids pushing to the trunk unless the owner says otherwise; he said
