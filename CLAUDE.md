@@ -116,14 +116,11 @@ the served `script.js` carries the expected `?v=` (§6).
 - **The plugin loader is fetched from Aktiv's demo portal, not vendored.** It keeps the
   demo aligned with the reference page; there is no build step to pin a copy by hash.
 - **UI text, project documents and log lines are Russian; code and commits are English** (§10).
-- **No `docs/decisions/` and no `HANDOFF.md` yet** — created when first needed (§2).
-
-## Departures from AGENTS.md
-
-- **§1, trunk-only.** Sessions started from claude.ai for this repository are required by
-  the harness to commit to a session branch (currently `claude/zealous-clarke-d5paci`)
-  and are forbidden to push to `main` without the owner saying so explicitly. The rule is
-  not waived — ask the owner to merge the branch, or for permission to push to `main`.
+- **Commits go straight to `main`.** The harness starts cloud sessions on a branch
+  (`claude/…`) and forbids pushing to the trunk unless the owner says otherwise; he said
+  otherwise on 2026-09-14. Work on the assigned branch if the harness insists, but it is
+  not done until `main` carries it — merge fast-forward and push.
+- **No `docs/decisions/` yet** — created when first needed (§2).
 
 ## What the owner reviews
 
