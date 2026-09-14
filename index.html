@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Рутокен Био — Демонстрация биометрической аутентификации</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23dd2233'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Arial' font-size='18' font-weight='bold' fill='%23fff'%3EР%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=2026-09-14.4">
 </head>
 <body>
 
@@ -20,6 +21,12 @@
       </div>
       <div class="header-status">
         <span id="connectionStatus" class="status-badge">Загрузка…</span>
+        <div class="bio-buttons-top-right">
+          <button type="button" id="btnToggleLogs" class="bio-btn small log-toggle">Показать подробные логи</button>
+          <button type="button" id="btnLoginBio" class="bio-btn small">Войти по биометрии</button>
+          <button type="button" id="btnLogoutBio" class="bio-btn small">Выйти по биометрии</button>
+          <button type="button" id="btnStopLoginBio" class="bio-btn small">Остановить проверку био</button>
+        </div>
       </div>
     </div>
   </header>
@@ -36,7 +43,7 @@
         </p>
         <div class="hero-buttons">
           <a href="#steps" class="btn btn-primary">Начать работу</a>
-          <a href="#steps" class="btn btn-outline">Как это работает</a>
+          <a href="#consoleSection" class="btn btn-outline">Журнал операций</a>
         </div>
       </div>
       <div class="hero-visual">
@@ -103,7 +110,7 @@
             <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_256" selected>ГОСТ Р 34.10-2012 256</option>
             <option value="PUBLIC_KEY_ALGORITHM_GOST3410_2012_512">ГОСТ Р 34.10-2012 512</option>
           </select>
-          <input type="text" id="keyMarker" placeholder="Название ключа (напр. TestKey)" class="step-input" aria-label="Название ключа">
+          <input type="text" id="keyMarker" placeholder="Название ключа" class="step-input" aria-label="Название ключа">
           <label class="step-checkbox">
             <input type="checkbox" id="useBio"> 🔬 С биометрией
           </label>
@@ -153,14 +160,6 @@
     </div>
   </section>
 
-  <!-- ===== БИО-КНОПКИ (правый верхний угол) ===== -->
-  <div class="bio-buttons-top-right">
-    <button type="button" id="btnToggleLogs" class="bio-btn small log-toggle">Показать подробные логи</button>
-    <button type="button" id="btnLoginBio" class="bio-btn small">Войти по биометрии</button>
-    <button type="button" id="btnLogoutBio" class="bio-btn small">Выйти по биометрии</button>
-    <button type="button" id="btnStopLoginBio" class="bio-btn small">Остановить проверку био</button>
-  </div>
-
   <!-- ===== БИО-ПОПАП ===== -->
   <div id="bioPopup" class="bio-popup" role="status" aria-live="assertive" style="display:none;">
     <div class="bio-popup-content">
@@ -181,6 +180,6 @@
   </div>
 
   <script src="https://aktivco.github.io/rutoken-plugin-demo/rutoken-plugin.js"></script>
-  <script src="script.js?v=2026-09-14.3"></script>
+  <script src="script.js?v=2026-09-14.4"></script>
 </body>
 </html>
