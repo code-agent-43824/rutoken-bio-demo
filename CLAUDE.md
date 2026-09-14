@@ -19,6 +19,12 @@ There is no build, no linter and no package manager. `test.js` is a single IIFE 
 runs end to end, so there is no "single test" to run — to narrow a run, comment out
 assertion blocks temporarily and restore them before committing.
 
+`test.js` says nothing about layout. For that, serve the page and drive it with the
+preinstalled Chromium through Playwright (`NODE_PATH=$(npm root -g)`), measuring
+`scrollWidth` against `clientWidth` and the bounding boxes of overlapping elements at
+several widths; that is how the defects in `docs/JOURNAL.md` were found. The plugin
+loader does not load in that environment, so only the layout can be judged there.
+
 Nothing here exercises real biometrics. That needs a browser with the Rutoken plugin
 installed and a Rutoken Bio token plugged in; `test.js` drives a fake plugin object,
 which is a claim about logic only (§4).
@@ -96,9 +102,10 @@ in `style.css` (`--rt-red`, `--rt-teal`, …); add new ones there, not inside ru
 
 ## Version discipline
 
-`BUILD_ID` in `script.js` and the `?v=` query on `<script src="script.js?v=…">` in
-`index.html` must match. GitHub Pages caches aggressively, so every change to `script.js`
-raises both — otherwise visitors keep the old file.
+`BUILD_ID` in `script.js` and the `?v=` query on **both** asset tags in `index.html`
+(`script.js` and `style.css`) carry one version and must match. GitHub Pages caches
+aggressively, so any change to either asset raises all three — otherwise visitors keep
+the old file.
 
 ## Deployment
 
