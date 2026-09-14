@@ -2,7 +2,7 @@
 (function() {
   'use strict';
 
-  const BUILD_ID = '2026-09-14.6';
+  const BUILD_ID = '2026-09-14.7';
   const BIO_SUCCESS_MS = 900;
   let plugin = null;
   let currentDevice = null;

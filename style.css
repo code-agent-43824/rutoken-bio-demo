@@ -381,15 +381,15 @@ body {
 /* сканер отпечатка */
 .scanner {
   position: relative;
-  width: 132px;
-  height: 154px;
+  width: 140px;
+  height: 140px;
   margin: 0 auto 26px;
 }
 .scanner svg {
   position: absolute;
   left: 0;
-  width: 132px;
-  height: 154px;
+  width: 140px;
+  height: 140px;
 }
 .scanner-base {
   top: 0;
