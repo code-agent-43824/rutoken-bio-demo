@@ -1,0 +1,37 @@
+stages: [pages, release]
+
+# Копия фронтенда на GitLab Pages (web-проект).
+# Статический сайт без сборки — достаточно скопировать файлы в public/.
+pages:
+  stage: pages
+  tags: [linux-x64]            # Runner builder-linux-81
+  script:
+    - mkdir -p public
+    - cp index.html style.css script.js public/
+  artifacts:
+    paths: [public]
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Релиз: тар-архив фронтенда → Package Registry → GitLab Release с asset link.
+# Только $CI_JOB_TOKEN (никаких личных PAT). Архив создаём в /tmp,
+# НЕ внутри архивируемой директории.
+release:
+  stage: release
+  tags: [linux-x64]
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - tar czf /tmp/rutoken-bio-demo.tar.gz --exclude='.git' --exclude='public' --exclude='.gitlab-ci.yml' . && mv /tmp/rutoken-bio-demo.tar.gz .
+    - |
+      curl --fail --location --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --upload-file rutoken-bio-demo.tar.gz \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/rutoken-bio-demo/${CI_COMMIT_TAG}/rutoken-bio-demo.tar.gz"
+    - |
+      curl --fail --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --header "Content-Type: application/json" \
+        --data "{\"tag_name\":\"$CI_COMMIT_TAG\", \"name\":\"$CI_COMMIT_TAG\",
+        \"assets\":{\"links\":[{\"name\":\"rutoken-bio-demo.tar.gz\",
+        \"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/rutoken-bio-demo/${CI_COMMIT_TAG}/rutoken-bio-demo.tar.gz\"}]}}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"

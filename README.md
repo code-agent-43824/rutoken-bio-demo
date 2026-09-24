@@ -22,23 +22,19 @@
 ```
 rutoken-bio-demo/
 ├── index.html      # HTML: шапка, hero, 4 шага, ключи, био-кнопки, био-попап
-├── style.css        # CSS: светлый дизайн rutoken.ru, карточки, попап
-├── script.js         # JS: IIFE-модуль, loadPlugin, login, createKeyPair, signData, loginBio
-├── AGENTS.md         # Подробная документация для агентов-преемников
-└── README.md         # Этот файл
+├── style.css       # CSS: светлый дизайн rutoken.ru, карточки, попап
+├── script.js       # JS: IIFE-модуль, loadPlugin, login, createKeyPair, signData, loginBio
+├── AGENTS.md       # Правила кодинга (веб) для агентов
+├── PLAN.md         # План работ / что сделано
+└── README.md       # Этот файл
 ```
 
 ## 🚀 Запуск
 
 ```bash
-cd rutoken-bio-demo
 python3 -m http.server 8000
 # → http://localhost:8000
 ```
-
-## 🌐 GitHub Pages
-
-Страница доступна по адресу: **https://code-agent-43824.github.io/rutoken-bio-demo/**
 
 ## 📝 Технические детали
 
@@ -49,6 +45,7 @@ python3 -m http.server 8000
 
 ## 🔗 Ссылки
 
-- **Репозиторий:** https://github.com/code-agent-43824/rutoken-bio-demo
+- **Репозиторий GitLab:** https://scm.aktivco.ru/prototypes/rutoken-bio-demo
+- **GitLab Pages:** см. `GET /projects/1977/pages` (копия фронтенда)
 - **Референс:** https://aktivco.github.io/rutoken-plugin-demo/
 - **Документация плагина:** https://plugin.api.rutoken.ru/
