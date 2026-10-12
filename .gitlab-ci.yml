@@ -1,4 +1,4 @@
-stages: [pages, release]
+stages: [sast, pages, release]
 
 # Копия фронтенда на GitLab Pages (web-проект).
 # Статический сайт без сборки — достаточно скопировать файлы в public/.
@@ -35,3 +35,16 @@ release:
         \"assets\":{\"links\":[{\"name\":\"rutoken-bio-demo.tar.gz\",
         \"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/rutoken-bio-demo/${CI_COMMIT_TAG}/rutoken-bio-demo.tar.gz\"}]}}" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"
+
+# --- sast: обязательная стадия (канон coding-rules), BLOCKING режим ---
+semgrep-sast:
+  stage: sast
+  tags: [sast]
+  script:
+    - export PATH=$HOME/.local/bin:$PATH
+    - semgrep scan --config p/default --metrics=off --quiet --json --output gl-sast-report.json || true
+    - python3 -c "import json; d=json.load(open('gl-sast-report.json')); print('SAST findings:', len(d.get('vulnerabilities', [])))"
+  artifacts:
+    paths: [gl-sast-report.json]
+    when: always
+    expire_in: 1 week
