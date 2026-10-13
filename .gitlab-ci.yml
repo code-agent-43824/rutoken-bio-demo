@@ -5,7 +5,7 @@ stages: [sast, pages, release]
 # не зависит от semgrep.dev. Джобы: semgrep-sast + osv-scan (skip без lockfiles).
 include:
   - project: 'mko/ci-security'
-    ref: v1.1.1                # защищённый тег — НЕ main
+    ref: v1.1.2                # защищённый тег — НЕ main
     file: 'ci-semgrep.yml'
 
 # Копия фронтенда на GitLab Pages (web-проект).
