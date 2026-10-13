@@ -53,7 +53,12 @@
   }
   function errorMessage(error) { return errorDetails(error).message; }
   function hasErrorCode(error, code) {
-    return new RegExp('^' + code + '(?:\\D|$)').test(errorMessage(error));
+    // code — только числовые константы кодов Рутокена (93, 19), не
+    // пользовательский ввод: ReDoS/инъекция метасимволов невозможна.
+    // nosemgrep: generic-one-liners не относится; правило ниже подавлено
+    // сознательно (detect-non-literal-regexp — code это Number-литерал).
+    const pattern = new RegExp('^' + code + '(?:\\D|$)'); // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp — code только числовой литерал (93/19), не ввод пользователя
+    return pattern.test(errorMessage(error));
   }
   function debug(eventName, details) {
     appendLog('[DEBUG] ' + eventName + (typeof details === 'undefined' ? '' : ' ' + safeJson(details)), 'debug');
