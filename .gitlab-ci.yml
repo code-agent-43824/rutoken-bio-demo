@@ -4,7 +4,7 @@ stages: [sast, pages, release]
 # Правила вендорены в центральном репо ci-security (pinned ref), скан
 # не зависит от semgrep.dev. Джобы: semgrep-sast + osv-scan (skip без lockfiles).
 include:
-  - project: 'mko/ci-security'
+  - project: 'prototypes/ci-security'
     ref: v1.1.3                # защищённый тег — НЕ main
     file: 'ci-semgrep.yml'
 
