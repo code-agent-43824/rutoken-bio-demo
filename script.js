@@ -55,8 +55,8 @@
   function hasErrorCode(error, code) {
     // code — только числовые константы кодов Рутокена (93, 19), не
     // пользовательский ввод: ReDoS/инъекция метасимволов невозможна.
-    // nosemgrep: generic-one-liners не относится; правило ниже подавлено
-    // сознательно (detect-non-literal-regexp — code это Number-литерал).
+    // Сознательно не переносим на отдельные строки: detect-non-literal-regexp
+    // матчится на строке 60 (code это Number-литерал, не ввод пользователя).
     const pattern = new RegExp('^' + code + '(?:\\D|$)'); // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp — code только числовой литерал (93/19), не ввод пользователя
     return pattern.test(errorMessage(error));
   }
