@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const fs = require('node:fs');
 
 class FakeClassList {
@@ -150,6 +151,11 @@ function flush(times) {
 
 (async function() {
   const html = fs.readFileSync('index.html', 'utf8');
+  const stylesheet = html.match(/<link\b[^>]*\brel="stylesheet"[^>]*>/);
+  assert.ok(stylesheet, 'HTML должен подключать CSS');
+  const integrity = stylesheet[0].match(/\bintegrity="([^"]+)"/);
+  assert.ok(integrity, 'CSS должен содержать SRI-хеш');
+  assert.equal(integrity[1], 'sha256-' + createHash('sha256').update(fs.readFileSync('style.css')).digest('base64'), 'SRI CSS должен совпадать с SHA-256 файла в Base64');
   assert.match(html, /id="pinInput" value="12345678"/, 'PIN по умолчанию должен быть задан в HTML');
   assert.match(html, /<input type="text" id="pinInput"/, 'PIN показывается открытым текстом — решение владельца');
   assert.doesNotMatch(html, /❔/, 'неопределённого состояния ключа не существует');
